@@ -5,9 +5,57 @@ from matplotlib.animation import FuncAnimation, writers
 
 plot_style = 'dark_background'  # variável de estilo de plot possível de ser alterada pelo usuário
 
+# todo: trocar asserts por try ... except em amimar_aim()
 
-def animar_sim(sim_data=None, xlim=(-5, 5), ylim=(-5, 5), seguir=-42,
-               vel=1.0, fps=30, salvar_em='', **kwargs):
+
+def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
+               xlim=(-5, 5), ylim=(-5, 5), seguir=-42, **kwargs):
+    """
+    Plota animação 2D, opcionalmente salva, e a exibe, com base em matplotlib, tendo diversas opções de customização.
+    .. warning:: Para salvar animações se faz necessário ter instalado ffmpeg.
+
+    Parâmetros
+    ----------
+    sim_data : ndarray, ndarray
+        Arrays 's_hist' e 't_hist' de sim.simular().
+    fps : int ou float, padrão=30
+    vel : int ou float, padrão=1.0
+        Velocidade de reprodução
+    salvar_em : string, opcional
+        string com diretório do arquivo a ser salvado. Não alterando essa variável nada será salvo.
+        .. warning:: O diretório deve incluir o nome do arquivo e ser no formato .mp4
+    xlim : iterável de comprimento 2, padrão=(-5, 5)
+        'Campo de visão' ou tamanho do enquadramento na direção x, em coordenadas do sistema.
+    ylim : iterável de comprimento 2, padrão=(-5, 5)
+        'Campo de visão' ou tamanho do enquadramento na direção y, em coordenadas do sistema.
+    seguir : int, opcional
+        Índice de objeto um objeto na lista '_objs' ou ordem em que ele foi criado, para a 'câmera' acompanhar
+        e atualizar os limites.
+    kwargs
+        Ver Raises
+
+    Raises
+    ------
+    Argumentos dos dados de simulação não preenchidos devidamente.
+        animar_sim() necessita que se entre como argumentos, ou uma simulação sim.simular(),
+        ou com uma lista de vetores posição em cada iteração \'s_hist=\' e uma lista de de instantes \'t_hist\'
+
+    Exemplos
+    --------
+    Ver seção executável do módulo sim.py.
+
+    Notas
+    ------
+    Até o momento 'animar_sim()' ainda depende da importação de sim.py e sua manipulação de objetos.
+
+    O estilo deplotagem pode ser alterado pela variavel global 'plot_style'.
+    Para mais informações visite a seção plot styles da biblioteca matplotlib.
+
+    Ver também
+    ----------
+    sim.simular()
+
+    """
     plt.style.use(plot_style)
     if sim_data is not None:  # essas condicionais servem para aceitar tanto a função simulate, como entrada quanto
         # os vetores posição e lista de iterações, separadamente
@@ -39,7 +87,7 @@ def animar_sim(sim_data=None, xlim=(-5, 5), ylim=(-5, 5), seguir=-42,
             plt.xlim(xlim)  # limites fixos
             plt.ylim(ylim)
         else:
-            assert seguir < len(sim.objs), 'Objeto não referenciado corretamente. \n' \
+            assert seguir < len(sim._objs), 'Objeto não referenciado corretamente. \n' \
                                            'Deve-se colocar a ordem em que ele foi criado (ex: 0,1,2,3... etc)'
             plt.xlim(xlim + pos[seguir, 0])  # limite atualizado de acordo com a posição do objeto
             plt.ylim(ylim + pos[seguir, 1])
@@ -60,10 +108,3 @@ def animar_sim(sim_data=None, xlim=(-5, 5), ylim=(-5, 5), seguir=-42,
     print('Exibindo...')
     plt.show()
     plt.close()
-
-
-if __name__ == '__main__':
-    part = sim.Particula(m=1)
-    part.em_orbita(s=[-1, 0], m=0.1)
-    animar_sim(sim.simular(10, 0.01), xlim=(-2, 2), ylim=(-2, 2), vel=1,
-               salvar_em='C:/Users/Ícaro/Desktop/zoo.mp4')
