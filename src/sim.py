@@ -3,7 +3,7 @@ import numpy as np
 _objs = []  # lista global de objetos de todas as classes
 G = 1  # 6.6708e-11  # constante da gravitação universal
 
-# todo: documentação dos módulos
+# todo: terminar documentação dos módulos
 
 
 class Particula:
@@ -201,7 +201,7 @@ def simular(t, h=1/30):  # função com as iterações em loop do sistema. Padr�
 
 
 if __name__ == '__main__':
-    from capym import ani
+    from src import ani
 
     sis = input('Selecione sistema de 3 corpos de exemplo: \n 1 - Infinito \n 2 - Com órbita externa \n')
     if sis == '1':
