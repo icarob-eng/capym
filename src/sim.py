@@ -1,27 +1,38 @@
+"""
+Módulo com ferramentas para simulação e classes simuláveis.
+
+Classes
+-------
+Particula
+    Classe base para todos os objetos da simulação em 2D.
+
+Variáveis
+---------
+G = 1
+    Constante dagravitação universal. Sinta-se livre para alterá-la.
+
+Funções
+-------
+limpar_objetos
+    Limpa a lista interna de objetos criados, deletando todos os objetos da simulação.
+iterar
+    Iteração simples usando método de Euler
+simular
+    Executa diversas iterações e rotorna uma lista de passos.
+
+"""
+
 import numpy as np
 
 _objs = []  # lista global de objetos de todas as classes
 G = 1  # 6.6708e-11  # constante da gravitação universal
-
-# todo: terminar documentação dos módulos
 
 
 class Particula:
     """
     Classe base para todos os objetos da simulação em 2D.
     Contem apenas posição inicial, velocidade inicial e massa de modo que não há colisões.
-    Um ponteiro no final da lista '_objs' é adicionado em toda instânciação, apontando para ele.
-
-    Parâmetros
-    ----------
-    s : iterável (lista, tupla, ndarray, etc.) de formato (2,), padrão=[0,0]
-        Posição da partícula no início da simulação.
-        Independente do tipo de iterável, o código transforma em ndarray.
-    v : iterável (lista, tupla, ndarray, etc.) de formato (2,), padrão=[0,0]
-        Velocidade da partícula no início da simulação.
-        Independente do tipo de iterável, o código transforma em ndarray.
-    m : int ou float, padrão=1.0
-        Massa da partícula.
+    Um ponteiro no final da lista `_objs` é adicionado em toda instânciação, apontando para ele.
 
     Atributos
     ---------
@@ -32,10 +43,29 @@ class Particula:
     m : int ou float
         Massa da partícula.
     index : int
-        Indíce do objeto na lista _objs.
+        Indíce do objeto na lista `_objs`.
+
+    Métodos
+    -------
+    ar()
+        Retorna vetor aceleração resutante.
+    em_orbita(s, m=1.0, sentido=True)
+        Retorna uma partícula em órbita na posição e massa especificada.
 
     """
     def __init__(self, s=[0, 0], v=[0, 0], m=1.0):
+        """
+        Parâmetros
+        ----------
+        s : iterável (lista, tupla, ndarray, etc.) de formato (2,), padrão=[0,0]
+            Posição da partícula no início da simulação.
+            Independente do tipo de iterável, o código transforma em ndarray.
+        v : iterável (lista, tupla, ndarray, etc.) de formato (2,), padrão=[0,0]
+            Velocidade da partícula no início da simulação.
+            Independente do tipo de iterável, o código transforma em ndarray.
+        m : int ou float, padrão=1.0
+            Massa da partícula.
+        """
         self.s = np.array(s)  # vetor de posição
         self.v = np.array(v)  # vetor de velocidade
         self.m = m  # massa do objeto
@@ -116,7 +146,7 @@ class Particula:
 
 def limpar_objetos():  # função para limpar a lista de objetos (reiniciar simulações)
     """
-    Limpa a lista '_objs' apagando todos os objetos.
+    Limpa a lista `_objs` apagando todos os objetos.
 
     Notas
     -----
@@ -144,12 +174,12 @@ def iterar(h=1/30):  # padrão definido para 30 FPS
     Retorna
     -------
     ndarray
-        Lista de vetores com posições de cada objeto. A ordem dos vetores correpsonde ao índice do objeto em '_objs'.
+        Lista de vetores com posições de cada objeto. A ordem dos vetores correpsonde ao `.index` do objeto.
 
     Notas
     -----
-    Quanto menor o valor de h maior precisão/reslução da simulação.
-    Um h negativo implica em uma simulação voltando no tempo, teoricamente.
+    Quanto menor o valor de `h` maior precisão/reslução da simulação.
+    Um `h` negativo implica em uma simulação voltando no tempo, teoricamente.
 
     """
     s_list = []  # lista com posição dos objetos em cada iteração
@@ -182,10 +212,10 @@ def simular(t, h=1/30):  # função com as iterações em loop do sistema. Padr�
 
     Notas
     -----
-    Essa função retorna uma matriz de ranque três, sendo a primeira coordenada uma lista com cada iteração;
-    a segunda, uma lista de vetores posição de cada objeto por iteração; e a terceira a devida coordenada x ou y.
-    Assim, em 's_hist[i,o,d]' temos que 'i' é o índice de cada Iteração;
-    'o', o índice de cada Objeto na dada iteração; e 'd' a Direção/coordenada de cada objeto em cada iteração.
+    Essa função retorna uma matriz de três dimensões, sendo a primeira coordenada uma lista com cada iteração;
+    a segunda, uma lista de vetores posição de cada objeto por iteração; e a terceira a devida coordenada `x` ou `y`.
+    Assim, em `s_hist[i,o,d]` temos que `i` é o índice de cada Iteração;
+    `o`, o índice de cada Objeto na dada iteração; e `d` a Direção/coordenada de cada objeto em cada iteração.
 
     Ver também
     ----------
@@ -203,7 +233,7 @@ def simular(t, h=1/30):  # função com as iterações em loop do sistema. Padr�
 if __name__ == '__main__':
     from src import ani
 
-    sis = input('Selecione sistema de 3 corpos de exemplo: \n 1 - Infinito \n 2 - Com órbita externa \n')
+    sis = input('Selecione sistema de 3 corpos de exemplo: \n1 - Infinito \n2 - Com órbita externa \n->')
     if sis == '1':
         # sistema de 3 corpos formato infinito; G = 1
         a = 0.3471128135672417
