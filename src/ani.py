@@ -1,11 +1,28 @@
+"""
+Módulo com ferramentas para animação das simulações.
+
+Variáveis
+---------
+plot_style = 'dark_bacground'
+    Variável de estilo de plot. Sinta-se livre para alterá-la. Para mais informações, ver notas de `ani.animar_sim()`.
+
+Funções
+-------
+animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='', xlim=(-5, 5), ylim=(-5, 5), seguir=-42, **kwargs):
+    Principal função do módulo, anima e opcionalmente salva a simulação em diretório selecionado.
+
+Ver também
+----------
+ani.py
+
+"""
+
 from src import sim
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
 
 plot_style = 'dark_background'  # variável de estilo de plot possível de ser alterada pelo usuário
-
-# todo: trocar asserts por try ... except em amimar_aim()
 
 
 def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
@@ -17,13 +34,15 @@ def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
     Parâmetros
     ----------
     sim_data : ndarray, ndarray
-        Arrays 's_hist' e 't_hist' de sim.simular().
+        Arrays `s_hist` e `t_hist` de `sim.simular()`.
     fps : int ou float, padrão=30
+        fps da animação.
     vel : int ou float, padrão=1.0
         Velocidade de reprodução
     salvar_em : string, opcional
         string com diretório do arquivo a ser salvado. Não alterando essa variável nada será salvo.
-        .. warning:: O diretório deve incluir o nome do arquivo e ser no formato .mp4
+        .. warning:: O diretório deve incluir o nome do arquivo e ser no formato .mp4 ou .gif
+        (outros formatos não testados)
     xlim : iterável de comprimento 2, padrão=(-5, 5)
         'Campo de visão' ou tamanho do enquadramento na direção x, em coordenadas do sistema.
     ylim : iterável de comprimento 2, padrão=(-5, 5)
@@ -36,9 +55,11 @@ def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
 
     Raises
     ------
-    Argumentos dos dados de simulação não preenchidos devidamente.
-        animar_sim() necessita que se entre como argumentos, ou uma simulação sim.simular(),
+    AttributeError
+        Argumentos dos dados de simulação não preenchidos devidamente.
+        Argumentos deve, ser: ou uma simulação sim.simular(),
         ou com uma lista de vetores posição em cada iteração \'s_hist=\' e uma lista de de instantes \'t_hist\'
+
 
     Exemplos
     --------
@@ -46,9 +67,9 @@ def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
 
     Notas
     ------
-    Até o momento 'animar_sim()' ainda depende da importação de sim.py e sua manipulação de objetos.
+    Até o momento `animar_sim()` ainda depende da importação de sim.py e sua manipulação de objetos.
 
-    O estilo deplotagem pode ser alterado pela variavel global 'plot_style'.
+    O estilo deplotagem pode ser alterado pela variavel global `plot_style`.
     Para mais informações visite a seção plot styles da biblioteca matplotlib.
 
     Ver também
@@ -60,13 +81,14 @@ def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
     if sim_data is not None:  # essas condicionais servem para aceitar tanto a função simulate, como entrada quanto
         # os vetores posição e lista de iterações, separadamente
         s_hist, t_hist = sim_data
-    else:
-        assert ('s_hist' and 't_hist') in kwargs, 'Argumentos dos dados de simulação não preenchidos devidamente. \n' \
-                      'animar_sim() necessita que se entre como argumentos, ou uma simulação sim.simular(),' \
-                      'ou com uma lista de vetores posição em cada iteração \'s_hist=\'' \
-                                                  'e uma lista de de instantes \'t_hist\''
+    elif ('s_hist' and 't_hist') in kwargs:
         s_hist = kwargs['s_hist']
         t_hist = kwargs['t_hist']
+    else:
+        raise AttributeError('Argumentos dos dados de simulação não preenchidos devidamente. \n'
+                             'Argumentos deve, ser: ou uma simulação sim.simular(), '
+                             'ou com uma lista de vetores posição em cada iteração \'s_hist=\' '
+                             'e uma lista de de instantes \'t_hist\'')
 
     s_hist = np.array(s_hist)  # para garantir que é uma array
     t_hist = np.array(t_hist)
@@ -86,9 +108,10 @@ def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
         if seguir < 0:  # configurações de limite responsivo
             plt.xlim(xlim)  # limites fixos
             plt.ylim(ylim)
+        elif seguir > len(sim._objs):
+            raise IndexError('Objeto selecionado para seguir fora da lista de objetos. '
+                             'Lembre-se que o índice começa em 0.')
         else:
-            assert seguir < len(sim._objs), 'Objeto não referenciado corretamente. \n' \
-                                           'Deve-se colocar a ordem em que ele foi criado (ex: 0,1,2,3... etc)'
             plt.xlim(xlim + pos[seguir, 0])  # limite atualizado de acordo com a posição do objeto
             plt.ylim(ylim + pos[seguir, 1])
 
@@ -96,6 +119,7 @@ def animar_sim(sim_data=None, fps=30, vel=1.0, salvar_em='',
 
         # todo: ajustar função para configurar plot por objeto (cores e raios próprios)
         # todo: adicionar acompanhar centro de massa
+        # todo: criar limites adaptáveis
 
     anim = FuncAnimation(plt.gcf(), func_animar,
                          frames=int(t_total / dt), interval=1000 * dt)  # faz o loop de animação
