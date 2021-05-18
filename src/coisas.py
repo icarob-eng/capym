@@ -1,11 +1,20 @@
+"""
+Módulo com os objetos simuláveis.
+
+Classes
+-------
+Partícula
+    Classe base para todos os objetos da simulação em 2D.
+"""
+
 import numpy as np
 
 
 class Particula:
     """
     Classe base para todos os objetos da simulação em 2D.
-    Contem apenas posição inicial, velocidade inicial e massa de modo que não há colisões.
-    Um ponteiro no final da lista `_objs` é adicionado em toda instânciação, apontando para ele.
+    Contem apenas posição inicial, velocidade inicial e massa, de modo que não há colisões.
+    Para simular e animar o objeto, precisa ser adicionado a uma animação do módulo `sim.py`.
 
     Atributos
     ---------
@@ -15,12 +24,10 @@ class Particula:
         Vetor velocidade da partícula.
     m : int ou float
         Massa da partícula.
-    index : int
-        Indíce do objeto na lista `_objs`.
 
     Métodos
     -------
-    em_orbita(s, m=1.0, sentido=True)
+    em_orbita(s, m=1.0, tipo='particula', sentido=True)
         Retorna uma partícula em órbita na posição e massa especificada.
 
     """
@@ -40,8 +47,8 @@ class Particula:
         self.s = np.array(s)  # vetor de posição
         self.v = np.array(v)  # vetor de velocidade
         self.m = m  # massa do objeto
-        self.sim = None  # simulação a que o objeto se relaciona
-        self.sats = []  # lista de satélites,
+        self._sim = None  # simulação a que o objeto se relaciona
+        self._sats = []  # lista de satélites,
         # para o caso de o objeto não ter sido adicionado a uma simulação ainda,
         # eles são colocados em óbita só depois que for definida a simlação (e G)
         # todo: adicionar opção de customizar cores
@@ -58,6 +65,8 @@ class Particula:
             Independente do tipo de iterável, o código transforma em ndarray.
         m : int o float, padrão=1.0
             Massa da partícula.
+        tipo : string, padrão='particula'
+            Escolhe a classe da instância retornada pela função (no momento apenas partícula)
         sentido : bool, padrão=True
             True definido como sentido horáiro e False como anti-horário.
 
@@ -65,10 +74,24 @@ class Particula:
         -------
         Particula
             Retorna um objeto da classse partícula em velocidade orbital ao redor do objeto que chamou o método.
+
+        Raises
+        ------
+        NotImplementedError
+            Tipo não suportado para por em órbita
+            Se for colocado uma classe não reconhecida, o programa levanda este erro.
+
+        Notas
+        -----
+        Se este método for chamado sem a instância atual estar adiconada a uma simulação, a velocidade orbital do objeto
+        que retorna será configuranda automaticamente quando a instância for adicionada. Isto ocrre pois a velocidade
+        orbital depende da constante da gavitação universal (configurada na simulação).
+        A equação da velocidade orbital é:
+        .. math:: v = sqrt(G * M / dist)
         """
         # sentido=True -> horário, sentido=False -> anti-horário
-        if self.sim is not None:  # se ainda não se sabe o valor de G da simulação, apenas retorna como true
-            gc = self.sim.configs['G']  # pega o valor da constante G da simulação
+        if self._sim is not None:  # se ainda não se sabe o valor de G da simulação, apenas retorna como true
+            gc = self._sim.configs['G']  # pega o valor da constante G da simulação
             v = self._v_orbital(s, gc, sentido)
 
             if tipo == 'particula':
@@ -78,8 +101,8 @@ class Particula:
         else:  # se o objeto central não estiver em uma simulação, isto será adicionado depois
             if tipo == 'particula':
                 sat = Particula(s=s, m=m)
-                self.sats.append((sat, sentido))  # adiciona o objeto (sem velocidade) e o sentido de rotação como
-                # pares ordenados na sats
+                self._sats.append((sat, sentido))  # adiciona o objeto (sem velocidade) e o sentido de rotação como
+                # pares ordenados na _sats
                 print('Simulação não definida, a velocidade será configurada depois, automaticamente')
                 return sat
             else:
@@ -99,11 +122,11 @@ class Particula:
         return v
 
     def _def_sats(self):  # atualiza a velocidade orbital dos satéites levando em conta o G da simulação isntanciada
-        g = self.sim.configs['G']
-        for sat in self.sats:
+        g = self._sim.configs['G']
+        for sat in self._sats:
             sat[0].v = self._v_orbital(sat[0].s, g, sat[1])
             # define a velocidade orbital do satélite (sat[0] é o objeto e sat[1] o sentido de rotação)
-        del self.sats
+        del self._sats
 
 # todo: criar opção de deixar rastro para partícula
 # todo: classe circulo, com simulações de gases
@@ -112,3 +135,4 @@ class Particula:
 # todo: criar legenda temporária
 # todo: linhas (entre objetos e colisivas)
 # todo: atualizar documentação
+# todo: complementar versão orientada a objetos com funcional (simulação local ao invês de objeto)
