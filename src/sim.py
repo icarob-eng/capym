@@ -186,7 +186,7 @@ def iterar(h=1/30):  # padrão definido para 30 FPS
     for i in _objs:  # calcula os estados para cada objeto
         # atualiza o valor das variáveis do objeto i:
         i.s = i.s + h * i.v
-        i.v = i.v + h * i.ar()
+        i.v = i.v + h * i._ar()
         s_list.append(i.s)
         colisao()
     return np.array(s_list)
