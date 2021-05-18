@@ -20,8 +20,6 @@ class Particula:
 
     Métodos
     -------
-    ar()
-        Retorna vetor aceleração resutante.
     em_orbita(s, m=1.0, sentido=True)
         Retorna uma partícula em órbita na posição e massa especificada.
 
@@ -42,9 +40,14 @@ class Particula:
         self.s = np.array(s)  # vetor de posição
         self.v = np.array(v)  # vetor de velocidade
         self.m = m  # massa do objeto
+        self.sim = None  # simulação a que o objeto se relaciona
+        self.sats = []  # lista de satélites,
+        # para o caso de o objeto não ter sido adicionado a uma simulação ainda,
+        # eles são colocados em óbita só depois que for definida a simlação (e G)
         # todo: adicionar opção de customizar cores
 
-    def em_orbita(self, s, m=1.0, sentido=True):  # cria automaticamente um novo objeto em velocidade orbital
+    def em_orbita(self, s, m=1.0, tipo='particula', sentido=True):
+        # cria automaticamente um novo objeto em velocidade orbital da classe especificada
         """
         Cria um novo objeto da classe Particula com velocidade orbital em relação à instânia que chamou este método.
 
@@ -64,17 +67,48 @@ class Particula:
             Retorna um objeto da classse partícula em velocidade orbital ao redor do objeto que chamou o método.
         """
         # sentido=True -> horário, sentido=False -> anti-horário
+        if self.sim is not None:  # se ainda não se sabe o valor de G da simulação, apenas retorna como true
+            gc = self.sim.configs['G']  # pega o valor da constante G da simulação
+            v = self._v_orbital(s, gc, sentido)
+
+            if tipo == 'particula':
+                return Particula(s, v, m)
+            else:
+                raise NotImplementedError('Tipo não suportado para por em órbita')
+        else:  # se o objeto central não estiver em uma simulação, isto será adicionado depois
+            if tipo == 'particula':
+                sat = Particula(s=s, m=m)
+                self.sats.append((sat, sentido))  # adiciona o objeto (sem velocidade) e o sentido de rotação como
+                # pares ordenados na sats
+                print('Simulação não definida, a velocidade será configurada depois, automaticamente')
+                return sat
+            else:
+                raise NotImplementedError('Tipo não suportado para por em órbita')
+
+    def _v_orbital(self, s, g, sent):  # função para calcular a velociadde orbital de um objeto tendo a posição
         s = np.array(s)
         d = s - self.s  # vetor distância
-        mod_v = np.sqrt(G * self.m / abs(np.linalg.norm(d)))  # módulo da velocidade orbital
+        mod_v = np.sqrt(g * self.m / abs(np.linalg.norm(d)))  # módulo da velocidade orbital
         angle = np.arccos(d[0] / abs(np.linalg.norm(d)))
-        if sentido:
+        if sent:
             angle -= np.pi / 2  # calcula a inclinação do vetor v
         else:
             angle += np.pi / 2  # no senitdo horáiro ou anti-horáio
         v = np.array([mod_v * np.cos(angle), mod_v * np.sin(angle)]) + self.v
         # a adição da velocidade do objeto principal serve para anular a velocidade relativa
-        return Particula(s, v, m)
-        # todo: fazer as alterações da função `em_orbita()` para suportar mais de uma classe e corrigir erros
-# todo: criar opçaõ de deixar rastro para partícula
-# todo: classe circulo, com simulações
+        return v
+
+    def _def_sats(self):  # atualiza a velocidade orbital dos satéites levando em conta o G da simulação isntanciada
+        g = self.sim.configs['G']
+        for sat in self.sats:
+            sat[0].v = self._v_orbital(sat[0].s, g, sat[1])
+            # define a velocidade orbital do satélite (sat[0] é o objeto e sat[1] o sentido de rotação)
+        del self.sats
+
+# todo: criar opção de deixar rastro para partícula
+# todo: classe circulo, com simulações de gases
+# todo: criar propriedades elétricas
+# todo: criar delta v e tp
+# todo: criar legenda temporária
+# todo: linhas (entre objetos e colisivas)
+# todo: atualizar documentação

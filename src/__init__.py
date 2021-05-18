@@ -15,4 +15,4 @@ ani
 
 """
 
-__all__ = ['simul', 'coisas']
+__all__ = ['sim', 'coisas']
