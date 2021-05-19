@@ -155,7 +155,7 @@ class Sim:
         Quanto menor o valor de `h` maior precisão/reslução da simulação.
         Um `h` negativo implica em uma simulação voltando no tempo *(teoricamente)*.
         """
-        if not self.objs:
+        if len(self.objs) == 0:
             raise NameError('Não há nenhum objeto nesta simulação.'
                             ' Tente adicionar objetos usando o método `.add_obj()`.')
         h = self.h
@@ -195,7 +195,7 @@ class Sim:
         if len(self.objs) == 0:
             raise ValueError('Nenhum objeto adicionado a simulação atual.')
         t_hist = np.arange(0, t, h)  # cria uma lista de instantes no intervalo e passo definido
-        if not self.tempos:  # se a lista tempos era vazia, sobscreve ela com t_hist
+        if len(self.tempos) == 0:  # se a lista tempos era vazia, sobscreve ela com t_hist
             self.tempos = t_hist
         else:  # senão, adiciona t_hist ao final de tempos
             np.append(self.tempos, t_hist)
@@ -206,7 +206,7 @@ class Sim:
         for _ in t_hist:  # loop de iterações em cada instante
             s_hist.append(self.iterar())  # adiciona as posições do frame à lista de iterações
 
-        if not self.dados:  # se a lista dados era vazia, sobrescreve ela com s_hist
+        if len(self.dados) == 0:  # se a lista dados era vazia, sobrescreve ela com s_hist
             self.dados = np.array(s_hist)
         else:  # senão, adicona s_hist ao final de dados
             dados = self.dados.tolist()  # transforma em lista para não perder o formato
@@ -258,7 +258,7 @@ class Sim:
         vel = self.configs['vel']
         fps = self.configs['fps']
 
-        if not self.tempos:  # se uma simulação não tiver sido feita ele levanta esse erro
+        if len(self.tempos) == 0:  # se uma simulação não tiver sido feita ele levanta esse erro
             raise NameError('Não há dados de simulação neste objeto.'
                             ' Tente fazer uma simulação usando o método `.simular()`.')
         else:
