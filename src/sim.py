@@ -269,7 +269,7 @@ class Sim:
 
         h = self.h
         t_total = t_hist[-1] + h  # retoma duração da simulação
-        dt = (1 / fps) * vel  # intervalo entre frames
+        dt = (1 / fps)  # intervalo entre frames
         print('Compilando vídeo. Duração: {}s, numero de frames: {}'.format(t_total / vel, int(t_total / dt)))
 
         cores = []
@@ -277,7 +277,7 @@ class Sim:
             cores.append(o.cor)
 
         def func_animar(f):  # gerador de função animar. f é o frame atual
-            t = f * dt  # instante atual
+            t = f * dt * vel  # instante atual
             p = np.argmax(t_hist >= t)  # passo atual (primeiro instate após o frame atual)
             pos = np.array(s_hist[p])  # posições no passo atual
 
@@ -305,7 +305,7 @@ class Sim:
             # todo: criar limites adaptáveis
 
         anim = FuncAnimation(plt.gcf(), func_animar,
-                             frames=int(t_total / dt), interval=1000 * dt)  # faz o loop de animação
+                             frames=int(t_total / dt), interval=1000 / (vel * fps))  # faz o loop de animação
         if salvar_em != '':
             formato = salvar_em.split('.')[-1]  # retorna o texto após o último ponto do diretório
             salvar = True
@@ -344,7 +344,7 @@ class Sim:
                         'G': 1}  # Constante da gravitação universal; real = 6.6708e-11; 0 para sem gravidade
         self.h = 0.01
 
-    def rastro(self, obj, t0=0, t1=None, cor='tab:gray'):  # método que cria função de plotage de rastro
+    def rastro(self, obj, t0=0, t1=None, cor='tab:gray', ref=None):  # método que cria função de plotage de rastro
         if obj in self.objs:
             ind = self.objs.index(obj)  # pega o índice do objeto na lista `objs`
         elif isinstance(obj, int) and obj < len(self.objs):
@@ -355,13 +355,28 @@ class Sim:
         if t1 is None:
             t1 = self.tempos[-1]
 
+        if ref in self.objs:
+            ref = self.objs.index(ref)  # pega o índice do referencial na lista `objs`
+        elif isinstance(ref, int) and ref < len(self.objs):
+            pass
+        else:
+            ref = None
+
         def _plotar_rastro(itera):  # função que plota o gráfico do rastro do momento inicial `t0` até o atual `iter`
             t = self.tempos[itera]  # vê o segundo da iteração atual
-            if t < t1:  # se o intervalo já tiver passado, não plota o gráfico
+            if t < t1 and itera > 0:  # se o intervalo já tiver passado, não plota o gráfico
                 dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
-                x = dados[t0:itera, ind, 0]  # separa as coordenadas x do momento inicial ao atual
-                y = dados[t0:itera, ind, 1]  # separa as coordenadas y do momento inicial ao atual
+                abs_pos = dados[t0:itera, ind]
+                if ref is not None:
+                    nova_origem = dados[t0:itera, ref]
+                else:
+                    nova_origem = np.zeros(2)
+
+                dists = abs_pos - nova_origem + nova_origem[-1]
+
+                x = dists[:, 0]
+                y = dists[:, 1]
+
                 linha = plt.Line2D(x, y, c=cor)
                 plt.gca().add_line(linha)
         self._extra_plots.append(_plotar_rastro)
-

@@ -56,7 +56,7 @@ class Particula:
         # para o caso de o objeto não ter sido adicionado a uma simulação ainda,
         # eles são colocados em óbita só depois que for definida a simlação (e G)
 
-    def em_orbita(self, s, m=1.0, tipo='particula', sentido=True, nome='', cor='tab:blue'):
+    def em_orbita(self, s, m=1.0, tipo='particula', sentido=True, e=0.0, nome='', cor='tab:blue'):
         # todo: checar se passar kwargs para os argumentos do novo objeto seja uma melhor ideia
         # cria automaticamente um novo objeto em velocidade orbital da classe especificada
         """
@@ -96,7 +96,7 @@ class Particula:
         # sentido=True -> horário, sentido=False -> anti-horário
         if self._sim is not None:  # se ainda não se sabe o valor de G da simulação, apenas retorna como true
             gc = self._sim.configs['G']  # pega o valor da constante G da simulação
-            v = self._v_orbital(s, gc, sentido)
+            v = self._v_orbital(s, gc, sentido, e)
 
             if tipo == 'particula':
                 return Particula(s, v, m, nome, cor)
@@ -105,18 +105,19 @@ class Particula:
         else:  # se o objeto central não estiver em uma simulação, isto será adicionado depois
             if tipo == 'particula':
                 sat = Particula(s=s, m=m, nome=nome, cor=cor)
-                self._sats.append((sat, sentido))  # adiciona o objeto (sem velocidade) e o sentido de rotação como
+                self._sats.append((sat, sentido, e))  # adiciona o objeto (sem velocidade) e o sentido de rotação como
                 # pares ordenados na _sats
                 print('Simulação não definida, a velocidade será configurada depois, automaticamente')
                 return sat
             else:
                 raise NotImplementedError('Tipo não suportado para por em órbita')
 
-    def _v_orbital(self, s, g, sent):  # função para calcular a velociadde orbital de um objeto tendo a posição
+    def _v_orbital(self, s, g, sent, e):  # função para calcular a velociadde orbital de um objeto tendo a posição
         s = np.array(s)
         d = s - self.s  # vetor distância
-        mod_v = np.sqrt(g * self.m / abs(np.linalg.norm(d)))  # módulo da velocidade orbital
-        angle = np.arccos(d[0] / abs(np.linalg.norm(d)))
+        mod_rp = abs(np.linalg.norm(d))  # módulo do raio do perigeu
+        mod_v = np.sqrt(g * self.m * (2 / mod_rp - 1 / ((1 + e) * mod_rp)))  # módulo da velocidade orbital
+        angle = np.arccos(d[0] / mod_rp)
         if sent:
             angle -= np.pi / 2  # calcula a inclinação do vetor v
         else:
@@ -128,12 +129,11 @@ class Particula:
     def _def_sats(self):  # atualiza a velocidade orbital dos satéites levando em conta o G da simulação isntanciada
         g = self._sim.configs['G']
         for sat in self._sats:
-            sat[0].v = self._v_orbital(sat[0].s, g, sat[1])
+            sat[0].v = self._v_orbital(sat[0].s, g, sent=sat[1], e=sat[2])
             # define a velocidade orbital do satélite (sat[0] é o objeto e sat[1] o sentido de rotação)
         del self._sats
 
 # tarefas organizadas em ordem de execução
-# todo: órbita com excentrcidade automatica. Ver como denotar isso
 # todo: criar legenda temporária
 # todo: atualizar documentação. Documentação pendente:
 #  Particula.em_orbita() e coisas da classe; Particula.cor; Sim.rastro() e cosias da classe; example.py;

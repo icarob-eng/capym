@@ -4,6 +4,7 @@ sis = input('Selecione sistema de 3 corpos de exemplo: \n'
             '1 - Infinito \n'
             '2 - Com órbita externa \n'
             '3 - Sistema palentário \n'
+            '4 - Órbita elíptica \n'
             '-> ')
 if sis == '1':
     # sistema de 3 corpos formato infinito;
@@ -47,8 +48,22 @@ elif sis == '3':
 
     sistema.simular(20)
 
-    sistema.rastro(lua)
+    sistema.rastro(lua, ref=planeta)
 
     sistema.animar()
+elif sis == '4':
+    a = coisas.Particula(v=(0, 1), m=10)
+    b = a.em_orbita(s=(0, 2.5), m=1, cor='g', e=0.9)
+
+    s = sim.Sim()
+    s.add_obj(a, b)
+
+    s.simular(20)
+
+    s.configs['seguir'] = a
+    s.configs['vel'] = 1
+    s.rastro(b, ref=a)
+
+    s.animar()
 else:
     raise ValueError('Número inválido >:v')
