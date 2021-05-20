@@ -1,24 +1,54 @@
 from src import *
 
-lis = []
-
-sis = input('Selecione sistema de 3 corpos de exemplo: \n1 - Infinito \n2 - Com órbita externa \n-> ')
+sis = input('Selecione sistema de 3 corpos de exemplo: \n'
+            '1 - Infinito \n'
+            '2 - Com órbita externa \n'
+            '3 - Sistema palentário \n'
+            '-> ')
 if sis == '1':
-    # sistema de 3 corpos formato infinito; G = 1
+    # sistema de 3 corpos formato infinito;
+    # os valores desta e da simulação seguinte são retirados do artigo Coreografias no Problema de Três Corpos Restrito,
+    # link: https://doi.org/10.1590/1806-9126-rbef-2017-0401
     a = 0.3471128135672417
     b = 0.532726851767674
-    lis.append(coisas.Particula(s=[-1, 0], v=[a, b]))
-    lis.append(coisas.Particula(s=[1, 0], v=[a, b]))
-    lis.append(coisas.Particula(s=[0, 0], v=[-2 * a, -2 * b]))
-elif sis == '2':
-    # um sistema de 3 corpos; G = 1
-    lis.append(coisas.Particula(s=[-1, 0], v=[0, -0.3660350371], m=2))
-    lis.append(coisas.Particula(s=[1.254953728, 0], v=[0, 0.4593570344], m=0.5))
-    lis.append(coisas.Particula(s=[2.745046272, 0], v=[0, 1.004783114], m=0.5))
-else:
-    raise ValueError('Poxa! Era 1 ou 2, não tinha muita margem para erro, o que você botou aqui?')
+    lis = [coisas.Particula(s=[-1, 0], v=[a, b]),
+           coisas.Particula(s=[1, 0], v=[a, b]),
+           coisas.Particula(s=[0, 0], v=[-2 * a, -2 * b])]
+    # crio os objetos dentro de uma lista para facilitar o manuzeio
 
-minhaSim = sim.Sim()
-minhaSim.add_obj(lis)
-minhaSim.simular(10)
-minhaSim.animar()
+    minhaSim = sim.Sim()
+    minhaSim.add_obj(lis)
+    minhaSim.simular(10, h=0.0001)
+
+    minhaSim.configs['lims'] = ((-1.5, 1.5), (-1, 1))  # alterando enquadamento
+
+    minhaSim.animar()
+elif sis == '2':
+    # um sistema de 3 corpos;
+    lis = [coisas.Particula(s=[-1, 0], v=[0, -0.3660350371], m=2, cor='orchid'),
+           coisas.Particula(s=[1.254953728, 0], v=[0, 0.4593570344], m=0.5, cor='purple'),
+           coisas.Particula(s=[2.745046272, 0], v=[0, 1.004783114], m=0.5, cor='lime')]
+    # crio os objetos dentro de uma lista para facilitar o manuzeio
+
+    minhaSim = sim.Sim()
+    minhaSim.add_obj(lis)
+    minhaSim.simular(10)
+    minhaSim.animar()
+
+elif sis == '3':
+    estrela = coisas.Particula(m=1_000_000, nome='Sol', cor='yellow')
+    planeta = estrela.em_orbita(s=[200, 0], m=10000, nome='marte', cor='tomato')
+    lua = planeta.em_orbita(s=[205, 0], m=0, nome='phobos', cor='silver')
+
+    sistema = sim.Sim()
+    sistema.add_obj(estrela, planeta, lua)
+
+    sistema.configs['lims'] = ((-250, 250), (-250, 250))
+
+    sistema.simular(20)
+
+    sistema.rastro(lua)
+
+    sistema.animar()
+else:
+    raise ValueError('Número inválido >:v')

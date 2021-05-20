@@ -73,20 +73,22 @@ class Sim:
             self.objs = herdar.objs
             self.dados = herdar.dados
             self.tempos = herdar.tempos
-            self.configs = herdar.configs
             self.h = herdar.h
+            self.configs = herdar.configs
+            self._extra_plots = []
         else:
             self.objs = []  # lista de objetos inclusos na simulação
             self.dados = []  # dados gerados
             self.tempos = []  # insatantes de cada passo
             self.h = 0.01  # passo da simulação (padrão como 0.01)
             self.configs = {'estilo': 'dark_background',  # estilo de fundo
-                            'seguir': -1,  # objeto seguido (negativo para nenhum)
-                            # todo: criar forma de seguir ponteiro, além de índice
-                            'xlim': (-5, 5), 'ylim': (-5, 5),
-                            'fps': 30, 'vel': 1,  # limites de enquadramento
+                            'seguir': None,  # objeto seguido
+                            'lims': ((-5, 5), (-5, 5)),  # limites de enquadramento
+                            'fps': 30, 'vel': 1,
                             'G': 1}  # Constante da gravitação universal; real = 6.6708e-11; 0 para sem gravidade
             # dicionário de configurações da simulação
+
+            self._extra_plots = []  # lisat de funções plotando certas estruturas (como rastros)
 
     def add_obj(self, *args):
         """
@@ -252,8 +254,8 @@ class Sim:
         """
         # configurações
         plt.style.use(self.configs['estilo'])
-        xlim = self.configs['xlim']
-        ylim = self.configs['ylim']
+        xlim = self.configs['lims'][0]
+        ylim = self.configs['lims'][1]
         seguir = self.configs['seguir']
         vel = self.configs['vel']
         fps = self.configs['fps']
@@ -264,10 +266,15 @@ class Sim:
         else:
             s_hist = self.dados
             t_hist = self.tempos
+
         h = self.h
         t_total = t_hist[-1] + h  # retoma duração da simulação
         dt = (1 / fps) * vel  # intervalo entre frames
         print('Compilando vídeo. Duração: {}s, numero de frames: {}'.format(t_total / vel, int(t_total / dt)))
+
+        cores = []
+        for o in self.objs:
+            cores.append(o.cor)
 
         def func_animar(f):  # gerador de função animar. f é o frame atual
             t = f * dt  # instante atual
@@ -277,17 +284,21 @@ class Sim:
             plt.cla()  # limpa o plot anterior
             plt.axis('scaled')
 
-            if seguir < 0:  # configurações de limite responsivo
+            if seguir is None:  # configurações de limite responsivo
                 plt.xlim(xlim)  # limites fixos
                 plt.ylim(ylim)
-            elif seguir > len(self.objs):
-                raise IndexError('Objeto selecionado para seguir fora da lista de objetos. '
-                                 'Lembre-se que o índice começa em 0.')
-            else:
+            elif seguir in self.objs:  # se seguir é objeto da simulação
+                ind = self.objs.index(seguir)  # pega o índice do objeto na lista `objs`
+                plt.xlim(xlim + pos[ind, 0])  # limite atualizado de acordo com a posição do objeto
+                plt.ylim(ylim + pos[ind, 1])
+            elif isinstance(seguir, int) and seguir < len(self.objs):  # se for um índice de um objeto
                 plt.xlim(xlim + pos[seguir, 0])  # limite atualizado de acordo com a posição do objeto
                 plt.ylim(ylim + pos[seguir, 1])
 
-            plt.scatter(pos[:, 0], pos[:, 1])  # plota os pontos
+            plt.scatter(pos[:, 0], pos[:, 1], c=cores)  # plota os pontos
+
+            for func in self._extra_plots:
+                func(p)
 
             # todo: ajustar função para configurar de plot por objeto (cores e raios próprios)
             # todo: adicionar acompanhar centro de massa
@@ -332,3 +343,25 @@ class Sim:
                         'fps': 30, 'vel': 1,  # limites de enquadramento
                         'G': 1}  # Constante da gravitação universal; real = 6.6708e-11; 0 para sem gravidade
         self.h = 0.01
+
+    def rastro(self, obj, t0=0, t1=None, cor='tab:gray'):  # método que cria função de plotage de rastro
+        if obj in self.objs:
+            ind = self.objs.index(obj)  # pega o índice do objeto na lista `objs`
+        elif isinstance(obj, int) and obj < len(self.objs):
+            ind = obj
+        else:
+            raise ValueError('Objeto selecionado não foi adicionado à simulação')
+
+        if t1 is None:
+            t1 = self.tempos[-1]
+
+        def _plotar_rastro(itera):  # função que plota o gráfico do rastro do momento inicial `t0` até o atual `iter`
+            t = self.tempos[itera]  # vê o segundo da iteração atual
+            if t < t1:  # se o intervalo já tiver passado, não plota o gráfico
+                dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
+                x = dados[t0:itera, ind, 0]  # separa as coordenadas x do momento inicial ao atual
+                y = dados[t0:itera, ind, 1]  # separa as coordenadas y do momento inicial ao atual
+                linha = plt.Line2D(x, y, c=cor)
+                plt.gca().add_line(linha)
+        self._extra_plots.append(_plotar_rastro)
+
