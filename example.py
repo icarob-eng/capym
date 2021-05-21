@@ -19,7 +19,7 @@ if sis == '1':
 
     minhaSim = sim.Sim()
     minhaSim.add_obj(lis)
-    minhaSim.simular(10, h=0.0001)
+    minhaSim.simular(5, h=0.0001)
 
     minhaSim.configs['lims'] = ((-1.5, 1.5), (-1, 1))  # alterando enquadamento
 
@@ -34,6 +34,10 @@ elif sis == '2':
     minhaSim = sim.Sim()
     minhaSim.add_obj(lis)
     minhaSim.simular(10)
+
+    minhaSim.texto((0.5, 0.5), 'Olha só, texto', obj=0)
+    minhaSim.configs['vel'] = 2
+
     minhaSim.animar()
 
 elif sis == '3':
@@ -48,11 +52,11 @@ elif sis == '3':
 
     sistema.simular(20)
 
-    sistema.rastro(lua, ref=planeta)
+    sistema.seta(ref0=planeta, ref1=estrela, largura=5)
 
     sistema.animar()
 elif sis == '4':
-    a = coisas.Particula(v=(0, 1), m=10)
+    a = coisas.Particula(v=(0, 1), cor='lightpink', m=10)
     b = a.em_orbita(s=(0, 2.5), m=1, cor='g', e=0.9)
 
     s = sim.Sim()
@@ -62,6 +66,8 @@ elif sis == '4':
 
     s.configs['seguir'] = a
     s.configs['vel'] = 1
+    s.area_kepler(a, b, t0=2, t1=4)
+    s.area_kepler(a, b, t0=6, t1=8)
     s.rastro(b, ref=a)
 
     s.animar()

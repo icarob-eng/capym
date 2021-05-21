@@ -134,9 +134,9 @@ class Particula:
         del self._sats
 
 # tarefas organizadas em ordem de execução
-# todo: criar legenda temporária
+# todo: organizar variáveis de Sim()
 # todo: atualizar documentação. Documentação pendente:
-#  Particula.em_orbita() e coisas da classe; Particula.cor; Sim.rastro() e cosias da classe; example.py;
+#  Particula.em_orbita() e coisas da classe; Particula.cor; example.py; métodos de Sim();
 #  Sim.confif['lims'] e coisas da classe; Atualizar README.md;
 # todo: criar propriedades elétricas
 # todo: classe circulo, com simulações de gases. Talvez isto requira módulo para colisões

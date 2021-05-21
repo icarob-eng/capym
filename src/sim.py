@@ -284,6 +284,9 @@ class Sim:
             plt.cla()  # limpa o plot anterior
             plt.axis('scaled')
 
+            for func in self._extra_plots:
+                func(p)
+
             if seguir is None:  # configurações de limite responsivo
                 plt.xlim(xlim)  # limites fixos
                 plt.ylim(ylim)
@@ -297,10 +300,6 @@ class Sim:
 
             plt.scatter(pos[:, 0], pos[:, 1], c=cores)  # plota os pontos
 
-            for func in self._extra_plots:
-                func(p)
-
-            # todo: ajustar função para configurar de plot por objeto (cores e raios próprios)
             # todo: adicionar acompanhar centro de massa
             # todo: criar limites adaptáveis
 
@@ -344,31 +343,30 @@ class Sim:
                         'G': 1}  # Constante da gravitação universal; real = 6.6708e-11; 0 para sem gravidade
         self.h = 0.01
 
-    def rastro(self, obj, t0=0, t1=None, cor='tab:gray', ref=None):  # método que cria função de plotage de rastro
+    def _get_index(self, obj):
         if obj in self.objs:
             ind = self.objs.index(obj)  # pega o índice do objeto na lista `objs`
-        elif isinstance(obj, int) and obj < len(self.objs):
+        elif isinstance(obj, int) and obj < len(self.objs) or obj is None:
             ind = obj
         else:
             raise ValueError('Objeto selecionado não foi adicionado à simulação')
+        return ind
 
+    def rastro(self, obj, t0=0, t1=None, cor='tab:gray', ref=None):  # método que cria função de plotage de rastro
+        ind = self._get_index(obj)
+        ref = self._get_index(ref)
         if t1 is None:
             t1 = self.tempos[-1]
 
-        if ref in self.objs:
-            ref = self.objs.index(ref)  # pega o índice do referencial na lista `objs`
-        elif isinstance(ref, int) and ref < len(self.objs):
-            pass
-        else:
-            ref = None
-
-        def _plotar_rastro(itera):  # função que plota o gráfico do rastro do momento inicial `t0` até o atual `iter`
-            t = self.tempos[itera]  # vê o segundo da iteração atual
-            if t < t1 and itera > 0:  # se o intervalo já tiver passado, não plota o gráfico
+        def _plotar_rastro(i):  # função que plota o gráfico do rastro do momento inicial `t0` até o atual `iter`
+            t = self.tempos[i]  # vê o segundo da iteração atual
+            if t0 < t < t1 and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+                tempos = np.array(self.tempos)
                 dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
-                abs_pos = dados[t0:itera, ind]
+                i0 = np.argmax(tempos >= t0)
+                abs_pos = dados[i0:i, ind]
                 if ref is not None:
-                    nova_origem = dados[t0:itera, ref]
+                    nova_origem = dados[t0:i, ref]
                 else:
                     nova_origem = np.zeros(2)
 
@@ -380,3 +378,91 @@ class Sim:
                 linha = plt.Line2D(x, y, c=cor)
                 plt.gca().add_line(linha)
         self._extra_plots.append(_plotar_rastro)
+
+    def texto(self, pos, texto, t0=0, t1=None, obj=None,
+              cor='w', fonte='serif'):
+        ind = self._get_index(obj)
+        pos = np.array(pos)
+
+        if t1 is None:
+            t1 = self.tempos[-1]
+
+        def _plotar_texto(i):
+            t = self.tempos[i]  # vê o segundo da iteração atual
+            if t0 < t < t1 and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+                dados = np.array(self.dados)
+                np.argmax(self.tempos >= t0)
+                if ind is None:
+                    ref = np.zeros(2)
+                else:
+                    ref = dados[i, ind]  # posição atual do objeto
+                p = pos + ref
+                plt.text(p[0], p[1], texto, color=cor, fontfamily=fonte)
+
+        self._extra_plots.append(_plotar_texto)
+
+    def area_kepler(self, obj_central, satelite, t0=0, t1=None,
+                    cor='tab:cyan', opacidade=0.25, cor_borda='tab:blue'):
+        centro = self._get_index(obj_central)
+        sat = self._get_index(satelite)
+        if t1 is None:
+            t1 = self.tempos[-1]
+
+        def _plotar_area(i):
+            t = self.tempos[i]  # vê o segundo da iteração atual
+            if t0 < t and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+                tempos = np.array(self.tempos)
+                dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
+                i0 = np.argmax(tempos >= t0)
+                i1 = np.argmax(tempos >= t1)
+                if t < t1:
+                    sat_pos = dados[i0:i, sat]
+                    centro_pos = dados[i0:i, centro]
+                    sat_dists = sat_pos - centro_pos + centro_pos[-1]
+
+                    pos = sat_dists.tolist()
+                    pos.append(centro_pos[-1])
+                else:
+                    sat_pos = dados[i0:i1, sat]
+                    centro_pos = dados[i0:i1, centro]
+                    centro_pos_atual = dados[i, centro]
+
+                    sat_dists = sat_pos - centro_pos + centro_pos_atual
+
+                    pos = sat_dists.tolist()
+                    pos.append(centro_pos_atual)
+
+                poligono = plt.Polygon(pos, facecolor=cor, alpha=opacidade, edgecolor=cor_borda)
+                plt.gca().add_patch(poligono)
+        self._extra_plots.append(_plotar_area)
+
+    def seta(self, pos0=(0, 0), pos1=(0, 0), ref0=None, ref1=None, t0=0, t1=None, largura=0.1,
+             cor='tab:cyan', opacidade=1, cor_borda='tab:blue'):
+        pos0 = np.array(pos0)
+        pos1 = np.array(pos1)
+
+        o0 = self._get_index(ref0)
+        o1 = self._get_index(ref1)
+
+        if t1 is None:
+            t1 = self.tempos[-1]
+
+        def _plotar_seta(i):
+            t = self.tempos[i]  # vê o segundo da iteração atual
+            if t0 < t < t1 and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+                dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
+                if ref0 is None:
+                    obj0 = np.zeros(2)
+                else:
+                    obj0 = np.array(dados[i, o0])
+                if ref1 is None:
+                    obj1 = np.zeros(2)
+                else:
+                    obj1 = np.array(dados[i, o1])
+
+                p0 = pos0 + obj0
+                p1 = pos1 + obj1 - p0
+
+                plt.arrow(p0[0], p0[1], p1[0], p1[1], facecolor=cor, alpha=opacidade, edgecolor=cor_borda,
+                          width=largura)
+        self._extra_plots.append(_plotar_seta)
