@@ -66,8 +66,8 @@ elif sis == '4':
 
     s.configs['seguir'] = a
     s.configs['vel'] = 1
-    s.area_kepler(a, b, t0=2, t1=4)
-    s.area_kepler(a, b, t0=6, t1=8)
+    s.area_kepler(a, b, inicio=2, parar=4)
+    s.area_kepler(a, b, inicio=6, parar=8)
     s.rastro(b, ref=a)
 
     s.animar()

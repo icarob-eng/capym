@@ -90,6 +90,8 @@ class Sim:
 
             self._extra_plots = []  # lisat de funções plotando certas estruturas (como rastros)
 
+            # todo: ver como faz para centro de masa (função que retorna um CM com todos os objetos?)
+
     def add_obj(self, *args):
         """
         Método para adiconar objetos a uma simulação.
@@ -264,13 +266,13 @@ class Sim:
             raise NameError('Não há dados de simulação neste objeto.'
                             ' Tente fazer uma simulação usando o método `.simular()`.')
         else:
-            s_hist = self.dados
-            t_hist = self.tempos
+            dados = self.dados
+            tempos = self.tempos
 
         h = self.h
-        t_total = t_hist[-1] + h  # retoma duração da simulação
+        t_max = tempos[-1] + h  # retoma duração da simulação
         dt = (1 / fps)  # intervalo entre frames
-        print('Compilando vídeo. Duração: {}s, numero de frames: {}'.format(t_total / vel, int(t_total / dt)))
+        print('Compilando vídeo. Duração: {}s, numero de frames: {}'.format(t_max / vel, int(t_max / dt)))
 
         cores = []
         for o in self.objs:
@@ -278,8 +280,8 @@ class Sim:
 
         def func_animar(f):  # gerador de função animar. f é o frame atual
             t = f * dt * vel  # instante atual
-            p = np.argmax(t_hist >= t)  # passo atual (primeiro instate após o frame atual)
-            pos = np.array(s_hist[p])  # posições no passo atual
+            p = np.argmax(tempos >= t)  # passo atual (primeiro instate após o frame atual)
+            pos = np.array(dados[p])  # posições no passo atual
 
             plt.cla()  # limpa o plot anterior
             plt.axis('scaled')
@@ -304,7 +306,7 @@ class Sim:
             # todo: criar limites adaptáveis
 
         anim = FuncAnimation(plt.gcf(), func_animar,
-                             frames=int(t_total / dt), interval=1000 / (vel * fps))  # faz o loop de animação
+                             frames=int(t_max / dt), interval=1000 / (vel * fps))  # faz o loop de animação
         if salvar_em != '':
             formato = salvar_em.split('.')[-1]  # retorna o texto após o último ponto do diretório
             salvar = True
@@ -343,126 +345,173 @@ class Sim:
                         'G': 1}  # Constante da gravitação universal; real = 6.6708e-11; 0 para sem gravidade
         self.h = 0.01
 
-    def _get_index(self, obj):
-        if obj in self.objs:
-            ind = self.objs.index(obj)  # pega o índice do objeto na lista `objs`
-        elif isinstance(obj, int) and obj < len(self.objs) or obj is None:
-            ind = obj
+    def _get_index(self, o):  # função interna que retorna um ínidice de objeto mesmo independente da input
+        # assim, serve como tratamento de input para funções aplicadas sobre objetos na simulação
+        if o in self.objs:  # se for um objeto propriamente adicionado basta pegar o índice
+            ind = self.objs.index(o)  # pega o índice do objeto na lista `objs`
+        elif isinstance(o, int) and o < len(self.objs) or o is None:
+            ind = o  # ser for um índice ou None, basta retornar isto
+        elif isinstance(o, str):  # se for uma string, compara com o nome de todos os objetos da simulação e retorna
+            # o primeiro de nome igual
+            ind = None
+            for i in self.objs:
+                if i.nome == o:
+                    ind = self.objs.index(o)
+                    break
+            if ind is None:
+                raise ValueError('Nome de objeto não corresponde a enhum da simulação')
         else:
             raise ValueError('Objeto selecionado não foi adicionado à simulação')
         return ind
 
-    def rastro(self, obj, t0=0, t1=None, cor='tab:gray', ref=None):  # método que cria função de plotage de rastro
-        ind = self._get_index(obj)
-        ref = self._get_index(ref)
-        if t1 is None:
-            t1 = self.tempos[-1]
+    def _extra_plot_time_params(self, inicio, parar, fechar):
+        # função que prepara as inputs de tempo das funções de plots extras
 
-        def _plotar_rastro(i):  # função que plota o gráfico do rastro do momento inicial `t0` até o atual `iter`
-            t = self.tempos[i]  # vê o segundo da iteração atual
-            if t0 < t < t1 and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+        if len(self.tempos) == 0:  # se uma simulação não tiver sido feita ele levanta esse erro
+            raise NameError('É necessárioexecutar a simulação antes de adicionar objetos extras de plot.'
+                            ' Tente fazer uma simulação usando o método `.simular()`.')
+
+        t0 = inicio
+        t1 = parar
+        t_max = fechar
+
+        # testam se o objeto é None ou inteiro
+        if fechar is None:
+            t_max = self.tempos[-1]
+            if parar is None:
+                t1 = self.tempos[-1]
+        else:
+            if parar is None:
+                t1 = self.tempos[-1]
+            elif t1 > t_max:
+                t_max = t1
+
+        if t0 == t1 or t0 == t_max:
+            print('Objeto de plot com tempo de animação 0')
+        elif t1 > self.tempos[-1] or t_max > self.tempos[-1]:
+            raise ValueError('Tempos de plotagem do objeto extra fora do intervalo da simulação.')
+
+        return t0, t1, t_max
+
+    def rastro(self, obj, inicio=0, parar=None, fechar=None, cor='tab:gray', ref=None):
+        # método que cria função de plotagem de rastro
+        ind = self._get_index(obj)  # objeto a deixar rastro
+        ref = self._get_index(ref)  # objeto de referencial para o rastro
+        t0, t1, t_max = self._extra_plot_time_params(inicio, parar, fechar)
+        # funções de tratamento de inputs
+
+        def _plotar_rastro(p):  # função que plota o gráfico do rastro do momento inicial t0 até o atual t
+            t = self.tempos[p]  # vê o segundo da iteração atual
+            if t0 < t < t_max and p > 0:  # se o intervalo já tiver passado do t_max, não o plota
+                # em i == 0 pode surgir um erro de lista vazia
                 tempos = np.array(self.tempos)
                 dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
-                i0 = np.argmax(tempos >= t0)
-                abs_pos = dados[i0:i, ind]
+                p0 = np.argmax(tempos >= t0)  # primeiro passo a exibir o plot
+                p1 = np.argmax(tempos >= t1)  # ultimo passo a ser animado
+                ref_pos_atual = dados[p, ref]  # posiçao atual do referencial
+
+                if t > t1:  # se o tempo da animação parou  o rastro apra de ser atualizado
+                    p = p1
+
+                abs_pos = dados[p0:p, ind]  # posições do objeto até o momento atual
                 if ref is not None:
-                    nova_origem = dados[t0:i, ref]
+                    ref_pos = dados[p0:p, ref]  # se o referencial não é nulo, retorna as posições do referencial até
+                    # o frame atual
                 else:
-                    nova_origem = np.zeros(2)
+                    ref_pos = np.zeros(2)  # se o referencial é nulo, não retorna nada
 
-                dists = abs_pos - nova_origem + nova_origem[-1]
+                dists = abs_pos - ref_pos + ref_pos_atual  # calcula as posições em relação a ref e põe junto
+                # a posição atual de ref
 
-                x = dists[:, 0]
+                x = dists[:, 0]  # separa os valores x e y de dists
                 y = dists[:, 1]
 
-                linha = plt.Line2D(x, y, c=cor)
-                plt.gca().add_line(linha)
-        self._extra_plots.append(_plotar_rastro)
+                linha = plt.Line2D(x, y, c=cor)  # retorna uma linha com o rastro do objeto
+                plt.gca().add_line(linha)  # plota a linha
 
-    def texto(self, pos, texto, t0=0, t1=None, obj=None,
-              cor='w', fonte='serif'):
-        ind = self._get_index(obj)
-        pos = np.array(pos)
+        self._extra_plots.append(_plotar_rastro)  # retorna a função de plotagem
 
-        if t1 is None:
-            t1 = self.tempos[-1]
-
-        def _plotar_texto(i):
-            t = self.tempos[i]  # vê o segundo da iteração atual
-            if t0 < t < t1 and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
-                dados = np.array(self.dados)
-                np.argmax(self.tempos >= t0)
-                if ind is None:
-                    ref = np.zeros(2)
-                else:
-                    ref = dados[i, ind]  # posição atual do objeto
-                p = pos + ref
-                plt.text(p[0], p[1], texto, color=cor, fontfamily=fonte)
-
-        self._extra_plots.append(_plotar_texto)
-
-    def area_kepler(self, obj_central, satelite, t0=0, t1=None,
+    def area_kepler(self, obj_central, satelite, inicio=0, parar=None, fechar=None,
                     cor='tab:cyan', opacidade=0.25, cor_borda='tab:blue'):
         centro = self._get_index(obj_central)
         sat = self._get_index(satelite)
-        if t1 is None:
-            t1 = self.tempos[-1]
+        t0, t1, t_max = self._extra_plot_time_params(inicio, parar, fechar)
+        print(t0, t1, t_max)
 
-        def _plotar_area(i):
-            t = self.tempos[i]  # vê o segundo da iteração atual
-            if t0 < t and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+        # funções para tratar input
+
+        def _plotar_area(p):
+            t = self.tempos[p]  # vê o segundo da iteração atual
+            if t0 < t < t_max and p > 0:  # se o intervalo já tiver passado, não plota o gráfico
                 tempos = np.array(self.tempos)
                 dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
-                i0 = np.argmax(tempos >= t0)
-                i1 = np.argmax(tempos >= t1)
-                if t < t1:
-                    sat_pos = dados[i0:i, sat]
-                    centro_pos = dados[i0:i, centro]
-                    sat_dists = sat_pos - centro_pos + centro_pos[-1]
+                p0 = np.argmax(tempos >= t0)  # primeiro passo a ser exibido
+                p1 = np.argmax(tempos >= t1)  # ultimo passo a ser animado
+                centro_pos_atual = dados[p, centro]  # posição atual do centro (para referencial)
 
-                    pos = sat_dists.tolist()
-                    pos.append(centro_pos[-1])
+                if t > t1:  # se o tempo da animação parou para de atualizar o passo para o polígono
+                    p = p1
+                sat_pos = dados[p0:p, sat]
+                centro_pos = dados[p0:p, centro]  # posições do satélite e centro até o momento atual
+
+                sat_dists = sat_pos - centro_pos + centro_pos_atual  # calcula o rastro do satélite
+
+                pos = sat_dists.tolist()
+                pos.append(centro_pos_atual)  # adiciona o centro ao rastro fechando o polígono
+
+                poligono = plt.Polygon(pos, facecolor=cor, alpha=opacidade, edgecolor=cor_borda)  # cria o polígono
+                plt.gca().add_patch(poligono)  # plota o polígono
+
+        self._extra_plots.append(_plotar_area)  # retornaa função de plotagem
+
+    def texto(self, texto, local=(0, 0), inicio=0, fechar=None, obj=None,
+              cor='w', fonte='serif'):
+        ref_ind = self._get_index(obj)
+        rel_pos = np.array(local)  # posição relativa (se tiver objeto como referencial)
+        t0, _, t_max = self._extra_plot_time_params(inicio, None, fechar)
+        # funções para tratar input
+
+        def _plotar_texto(p):
+            t = self.tempos[p]  # vê o segundo da iteração atual
+            if t0 < t < t_max and p > 0:  # se o intervalo já tiver passado, não plota o gráfico
+                dados = np.array(self.dados)  # transforma em array para facilitar manipulação
+                np.argmax(self.tempos >= t0)  # primeiro passo a exibir o plot
+                if ref_ind is None:
+                    ref = np.zeros(2)  # se não tiver um objeto, não faz anda
                 else:
-                    sat_pos = dados[i0:i1, sat]
-                    centro_pos = dados[i0:i1, centro]
-                    centro_pos_atual = dados[i, centro]
+                    ref = dados[p, ref_ind]  # posição atual do objeto
 
-                    sat_dists = sat_pos - centro_pos + centro_pos_atual
+                p = rel_pos + ref  # calcula a posição do texto em relação ao objeto
+                plt.text(p[0], p[1], texto, color=cor, fontfamily=fonte)  # plota o texto
 
-                    pos = sat_dists.tolist()
-                    pos.append(centro_pos_atual)
+        self._extra_plots.append(_plotar_texto)  # retorna a função de plotagem
 
-                poligono = plt.Polygon(pos, facecolor=cor, alpha=opacidade, edgecolor=cor_borda)
-                plt.gca().add_patch(poligono)
-        self._extra_plots.append(_plotar_area)
-
-    def seta(self, pos0=(0, 0), pos1=(0, 0), ref0=None, ref1=None, t0=0, t1=None, largura=0.1,
-             cor='tab:cyan', opacidade=1, cor_borda='tab:blue'):
+    def seta(self, pos0=(0, 0), pos1=(0, 0), ref0=None, ref1=None, inicio=0, fechar=None,
+             largura=0.1, cor='tab:cyan', opacidade=1, cor_borda='tab:blue'):
         pos0 = np.array(pos0)
         pos1 = np.array(pos1)
+        o0_ind = self._get_index(ref0)
+        o1_ind = self._get_index(ref1)
+        t0, _, t_max = self._extra_plot_time_params(inicio, None, fechar)
 
-        o0 = self._get_index(ref0)
-        o1 = self._get_index(ref1)
-
-        if t1 is None:
-            t1 = self.tempos[-1]
-
-        def _plotar_seta(i):
-            t = self.tempos[i]  # vê o segundo da iteração atual
-            if t0 < t < t1 and i > 0:  # se o intervalo já tiver passado, não plota o gráfico
+        def _plotar_seta(p):
+            t = self.tempos[p]  # vê o segundo da iteração atual
+            if t0 < t < t_max and p > 0:  # se o intervalo já tiver passado, não plota o gráfico
                 dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
-                if ref0 is None:
+                if ref0 is None:  # se ref0 é None, o referencial é 0
                     obj0 = np.zeros(2)
-                else:
-                    obj0 = np.array(dados[i, o0])
-                if ref1 is None:
+                else:  # senão, o referencial é a posição atual
+                    obj0 = np.array(dados[p, o0_ind])
+                if ref1 is None:  # idem do sobrescrito
                     obj1 = np.zeros(2)
-                else:
-                    obj1 = np.array(dados[i, o1])
+                else:  # bis in idem
+                    obj1 = np.array(dados[p, o1_ind])
 
-                p0 = pos0 + obj0
-                p1 = pos1 + obj1 - p0
+                p = pos0 + obj0  # calcula a posição de partida do vetor somado ao referencial
+                delta_p = pos1 + obj1 - p  # o vetor em se partindo de p com referencial a outro objeto
 
-                plt.arrow(p0[0], p0[1], p1[0], p1[1], facecolor=cor, alpha=opacidade, edgecolor=cor_borda,
-                          width=largura)
-        self._extra_plots.append(_plotar_seta)
+                plt.arrow(p[0], p[1], delta_p[0], delta_p[1],
+                          facecolor=cor, alpha=opacidade, edgecolor=cor_borda, width=largura)
+                # plota o a seta
+
+        self._extra_plots.append(_plotar_seta)  # retorna a função de plotagem
