@@ -18,9 +18,9 @@ class Particula:
 
     Atributos
     ---------
-    s : ndarray
+    s : array_like
         Vetor posição da partícula.
-    v : ndarray
+    v : array_like
         Vetor velocidade da partícula.
     m : int ou float
         Massa da partícula.
@@ -42,10 +42,10 @@ class Particula:
         """
         Parâmetros
         ----------
-        s : iterável (lista, tupla, ndarray, etc.) de formato (2,), padrão=[0,0]
+        s : array_like de formato (2,), padrão=[0,0]
             Posição da partícula no início da simulação.
-            Independente do tipo de iterável, o código transforma em ndarray.
-        v : iterável (lista, tupla, ndarray, etc.) de formato (2,), padrão=[0,0]
+            Independente do tipo de iterável, o código transforma em array_like.
+        v : array_like de formato (2,), padrão=[0,0]
             Velocidade da partícula no início da simulação.
             Independente do tipo de iterável, o código transforma em ndarray.
         m : int ou float, padrão=1.0
@@ -78,7 +78,7 @@ class Particula:
 
         Parâmeteros
         ----------
-        s : iterável de formato (2,)
+        s : array_like de formato (2,)
             Posição do objeto no início da simulação.
             Independente do tipo de iterável, o código transforma em ndarray.
         m : int o float, padrão=1.0
@@ -99,8 +99,8 @@ class Particula:
         Particula
             Retorna um objeto da classse partícula em velocidade orbital ao redor do objeto que chamou o método.
 
-        Raises
-        ------
+        Raise
+        -----
         NotImplementedError
             Tipo não suportado para por em órbita
             Se for colocado uma classe não reconhecida, o programa levanda este erro.
@@ -114,8 +114,9 @@ class Particula:
         Se este método for chamado sem a instância atual estar adiconada a uma simulação, a velocidade orbital do objeto
         que retorna será configuranda automaticamente quando a instância for adicionada. Isto ocrre pois a velocidade
         orbital depende da constante da gavitação universal (configurada na simulação).
-        A equação da velocidade orbital é:
-        .. math:: v = sqrt(G * M / dist)
+
+        A equação da velocidade orbital é: v = sqrt(G * M ( 2 / dist - 1 /a)
+        Onde o semi-eixo maior a = r_p - e * r_p, sendo r_p o raio do periastro (posição inicial).
         """
         # sentido=True -> horário, sentido=False -> anti-horário
         if self._sim is not None:  # se ainda não se sabe o valor de G da simulação, apenas retorna como true
@@ -159,9 +160,10 @@ class Particula:
 
 # tarefas organizadas em ordem de execução
 # todo: atualizar documentação. Documentação pendente:
-#  example.py; métodos de Sim(); Sim.config['lims'] e coisas da classe; Atualizar README.md;
-# todo: módulo coim calculos. Ex: período orbital (pegar dados da primeira posição da simulação)
-# todo: sim.Sim.simular_objs(): função com toda a rotina de simulação simplificada
+#  métodos de Sim(); Sim.config['lims'] e coisas da classe; Atualizar README.md;
+# todo: criar opção de customizar pontos exibidos das partículas
+# todo: módulo com calculos. Ex: período orbital (pegar dados da primeira posição da simulação)
+# todo: Sim.simular_objs(): função com toda a rotina de simulação simplificada
 # todo: criar propriedades elétricas
 # todo: classe circulo, com simulações de gases. Talvez isto requira módulo para colisões
 # todo: criar objetos continuos estáticos colidíveis

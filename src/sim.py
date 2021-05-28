@@ -356,10 +356,10 @@ class Sim:
             ind = None
             for i in self.objs:
                 if i.nome == o:
-                    ind = self.objs.index(o)
+                    ind = self.objs.index(i)
                     break
             if ind is None:
-                raise ValueError('Nome de objeto não corresponde a enhum da simulação')
+                raise ValueError('Nome de objeto não corresponde a nenhum da simulação')
         else:
             raise ValueError('Objeto selecionado não foi adicionado à simulação')
         return ind
