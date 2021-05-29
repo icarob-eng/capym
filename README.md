@@ -1,13 +1,13 @@
 # CaPyM: Capy, Python, Mecânica.
 
 ## Descrição
-Projeto simples de simulador de interações físicas, feito com base em numpy e matplotlib para plotagem. Para salvar animações feitas, se necessita de ffmpeg.
+Projeto simples de simulador de interações físicas, feito com base em numpy e matplotlib para plotagem. Para salvar animações feitas, se necessita de ffmpeg. [Link para download do ffmpeg](https://www.ffmpeg.org/). ~~Não fiz nenhum teste de versões então, boa sorte.~~
 
 No momento ele apenas trata de interações gravitacionais bidimensionais de pariculas pontiformes e não tem GUI, mas futuramente prentendo adicionar corpos contínuos, simulações tridimensionais, geometria de corpos rígidos, talvez até GUI. É um projeto pessoal, tenho aprendido bastante no desenvolvimento dele, mas não é pra ser grande coisa.
 
 ## Funcionamento
 Para usar este projeto você precisa fazer mão de duas classes importantes: `coisas.Particula` e `sim.Sim`. A primeira nos dá um objeto a ser simulado e a segunda nos dá uma simulação. Para criar uma partícula e uma simulação novas com as configurações padrão, basta fazer:
-```{python}
+```python
 from src import *
 
 minha_particula = coisas.Particula()
@@ -21,9 +21,9 @@ O objeto que determina os vetores velocidade e posição podem ser qualquer iter
 
 O padrão para partícula com dados não alterados é s=(0,0), v=(0,0), m=1.
 
-### Minha primeira simulação
+### Criando uma simulação
 É nas simulações que a física acontece, e também onde se é possível gerar e animar dados. Mas primeiro é preciso adicionar um objeto à simulação (caso contrários teremos erros) usando o método `sim.add_obj()`:
-```{python}
+```python
 from src import *
 
 a = coisas.Particula(s=(1,0), v=(1,0), m=10)
@@ -35,11 +35,11 @@ simul = sim.Sim()  # cria uma simulação
 simul.add_obj(a, b)  # adiciona as partículas à simulação
 ```
 Depois podemos simular o movimento das partículas adicioandas, digamos, por 2s:
-```{python}
+```python
 simul.simular(2)
 ```
 Por fim, vamos exibir o que fizemos:
-```{python}
+```python
 simul.animar()
 ```
 
@@ -47,20 +47,61 @@ simul.animar()
 
 Um dos parametros do método de animação é `salvar_em=''`, você pode substituir a string pelo caminho de um arquivo em que você queira salvar a animação (com o nome do arquivo e extensão inclusas), se você tiver ffmpeg funcionado. Há uma lista de formatos que devem ser suportados, em `sim.py`: '3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv', 'gif', 'm4v', 'mp2', 'mp3', 'mp4', 'mjpeg', 'mpeg', 'mpegets', 'mov', 'mkv', 'mxf', 'mxf_d10', 'mxf_opatom', 'nsv', 'null', 'ogg', 'ogv', 'rm', 'roq', 'vob', 'webm'. Ourtos formatos podem ser suportados (de acordo com ffmpeg), mas não garanto que vão.
 
-É possível alterar o estilo do gráfico de plotagem pelo artributo `Sim.configs['estilo']` substituindo o padrão por qualquer outro [estio da matplolib](https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html).
+É possível alterar o estilo do gráfico de plotagem pelo artributo `Sim.configs['estilo']` substituindo o padrão por qualquer outro [estilo da matplolib](https://matplotlib.org/stable/gallery/style_sheets/style_sheets_reference.html).
 
-Na verdade, o dicionário `Sim.configs` tem diversas configurações relevantes que podem ser alteradas para simples
+Na verdade, o dicionário `Sim.configs` tem diversas configurações relevantes que podem ser alteradas simplesmente substituindo o valor por outro válido.
+
+### Ilustrações extras
+Outras coisas podem ser adiocinadas à simulação que não tenhma nenhum efeito físico. Por exemplo, é possível ver o caminho que dois objetos de excentricidades diferentes percorrem com este código:
+```python
+c = coisas.Particula(m=100)
+a = c.em_orbita([0, -1], m=0, e=0, cor='tab:green')
+b = c.em_orbita([0, -1], m=0, e=0.7)
+s = sim.Sim()
+
+s.add_obj(a, b, c)
+
+s.simular(10)
+
+s.rastro(a)
+s.rastro(b)
+
+s.configs['lims'] = ((-3, 3), (-3, 3))
+s.animar(salvar_em=ani.gif)
+```
+
+![ani](https://user-images.githubusercontent.com/54824248/120056650-13dc0f80-c014-11eb-81f2-7075222cb400.gif)
+
+Estes objetos extras são o que chamados de objetos gráficos. São todos adicionados em métodos de `sim.Sim` após ter executado a simulação. Por hora os objetos gráficos disponíveis são:
+
+- `rastro()`
+- `area_kepler()`
+- `texto()`
+- `seta()`
+
+Para mais detalhes sobre cada um, consulte a documentação.
+
+### Estrutura recomendada de uma simulação
+Em linhas gerais é possível estabelecer alguns passos para exeutar uma simulação:
+
+1. Definir os objetos simuláveis;
+2. Criar um objeto de simulação (instância de `sim.Sim`);
+3. Configurar a simulação usando o dicionário `Sim.congifs`;
+4. Adicionar objetos usando `Sim.add_obj()`;
+5. Executar a simulação com `Sim.simular()`;
+6. Por os objetos gráficos extras como `Sim.rastro()`;
+7. Compilar tudo e animar com `Sim.animar()`; 
 
 ## Exemplos
-Aqui outras simulações que já fiz. Esta primeira está em `example.py`.
-```{python}
+Aqui outras simulações que já fiz. Esta primeira está é uma versão anterior da que está em `example.py`.
+```python
 # Condições iniciais:
 a = 0.3471128135672417
 b = 0.532726851767674
 
 lis = []  # lista de partícualas
 
-# cira partículas
+# cria partículas
 lis.apppend(coisas.Particula(s=[-1, 0], v=[a, b]))
 lis.apppend(coisas.Particula(s=[1, 0], v=[a, b]))
 lis.apppend(coisas.Particula(s=[0, 0], v=[-2 * a, -2 * b]))
@@ -76,7 +117,7 @@ minhaSim.animar(salvar_em='C:/Users/Ícaro/Desktop/animação.gif')  # salva a a
 Resultado:
 ![animação](https://user-images.githubusercontent.com/54824248/117578528-2cb46d80-b0c5-11eb-8134-7cece530f3ad.gif)
 ---
-```{python}
+```python
 # Condições iniciais:
 sol = coisas.Particula(s=(0, 0), m=1000)
 planeta = sol.em_orbita(s=(10, 0), m=50)  # cria partícula em velocidade orbital na posição especificada
