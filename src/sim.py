@@ -422,7 +422,7 @@ class Sim:
         # função que prepara as inputs de tempo das funções de plots extras
 
         if len(self.tempos) == 0:  # se uma simulação não tiver sido feita ele levanta esse erro
-            raise NameError('É necessárioexecutar a simulação antes de adicionar objetos extras de plot.'
+            raise NameError('É necessário executar a simulação antes de adicionar objetos extras de plot.'
                             ' Tente fazer uma simulação usando o método `.simular()`.')
 
         t0 = inicio
@@ -470,6 +470,27 @@ class Sim:
             Cor do rastro. Padrão de cores da matplotlib. Ver `coisas.Particula`.
         ref : objeto de classe simulável, int ou str, padrão=None
             Objeto, índice ou nome do objeto que servirá de referencial para as posições do rastro.
+
+        Raise
+        -----
+        ValueError
+            Nome de objeto não corresponde a nenhum da simulação
+
+            Levantado quando se passa uma string inválida como objeto.
+        ValueError
+            Objeto selecionado não foi adicionado à simulação
+
+            Levantado quando se passa um objeto que não foi adicionado à simulação.
+        NameError
+            É necessário executar a simulação antes de adicionar objetos extras de plot.
+            Tente fazer uma simulação usando o método `.simular()`.
+
+            Levantado quando se chama este método antes de `.simular()`.
+        ValueError
+            Tempos de plotagem do objeto extra fora do intervalo da simulação.
+
+            Levantado quando se entra com `parar` ou `fechar` maiores que o tamanho da simulação.
+
 
         Notas
         -----
@@ -555,6 +576,26 @@ class Sim:
         cor_borda : string, padrão'tab:blue'
             Cor da borda da área exibida. Padrão de cores da matplotlib. Ver `coisas.Particula`.
 
+        Raise
+        -----
+        ValueError
+            Nome de objeto não corresponde a nenhum da simulação
+
+            Levantado quando se passa uma string inválida como objeto.
+        ValueError
+            Objeto selecionado não foi adicionado à simulação
+
+            Levantado quando se passa um objeto que não foi adicionado à simulação.
+        NameError
+            É necessário executar a simulação antes de adicionar objetos extras de plot.
+            Tente fazer uma simulação usando o método `.simular()`.
+
+            Levantado quando se chama este método antes de `.simular()`.
+        ValueError
+            Tempos de plotagem do objeto extra fora do intervalo da simulação.
+
+            Levantado quando se entra com `parar` ou `fechar` maiores que o tamanho da simulação.
+
         Notas
         -----
         Vale lembrar a segunda lei de Kepler: o vetor que liga um planeta e o Sol varre áreas iguais em tempos iguais.
@@ -568,7 +609,6 @@ class Sim:
         centro = self._get_index(foco)
         sat = self._get_index(satelite)
         t0, t1, t_max = self._extra_plot_time_params(inicio, parar, fechar)
-        print(t0, t1, t_max)
 
         # funções para tratar input
 
@@ -621,6 +661,26 @@ class Sim:
             Cor do rastro. Padrão de cores da matplotlib. Ver `coisas.Particula`.
         fonte : string, padrão='serif'
             Padrão de fonte do matplotlib. Detalhes em: https://matplotlib.org/stable/tutorials/text/text_props.html
+
+        Raise
+        -----
+        ValueError
+            Nome de objeto não corresponde a nenhum da simulação
+
+            Levantado quando se passa uma string inválida como objeto.
+        ValueError
+            Objeto selecionado não foi adicionado à simulação
+
+            Levantado quando se passa um objeto que não foi adicionado à simulação.
+        NameError
+            É necessário executar a simulação antes de adicionar objetos extras de plot.
+            Tente fazer uma simulação usando o método `.simular()`.
+
+            Levantado quando se chama este método antes de `.simular()`.
+        ValueError
+            Tempos de plotagem do objeto extra fora do intervalo da simulação.
+
+            Levantado quando se entra com `fechar` maior que o tamanho da simulação.
 
         Ver também
         ----------
@@ -679,6 +739,26 @@ class Sim:
             `coisas.Particula`.
         cor_borda : string, padrão'tab:blue'
             Cor da borda da área exibida. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+
+        Raise
+        -----
+        ValueError
+            Nome de objeto não corresponde a nenhum da simulação
+
+            Levantado quando se passa uma string inválida como objeto.
+        ValueError
+            Objeto selecionado não foi adicionado à simulação
+
+            Levantado quando se passa um objeto que não foi adicionado à simulação.
+        NameError
+            É necessário executar a simulação antes de adicionar objetos extras de plot.
+            Tente fazer uma simulação usando o método `.simular()`.
+
+            Levantado quando se chama este método antes de `.simular()`.
+        ValueError
+            Tempos de plotagem do objeto extra fora do intervalo da simulação.
+
+            Levantado quando se entra com `fechar` maior que o tamanho da simulação.
 
         Ver também
         ----------
