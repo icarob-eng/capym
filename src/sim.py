@@ -26,7 +26,10 @@ formatos_suportados = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv',
 
 class Sim:
     """
-    Classe na qual ficam salvos os dados e configurações de simulação.
+    Classe na qual ficam salvos os dados e configurações de simulação. É possível herdar valores já configurados, copiar
+    uma simulação simplesmente passando a instância da qual vai ser herdada os valores como parâmetro no construtor da
+    classe.
+
     Atributos
     ---------
     objs : list, padrão=[]
@@ -42,7 +45,7 @@ class Sim:
         Configurações extras da simulação. Sendo elas:
         estilo: estilo de plot da matplotlib;
         seguir: ínidce do objeto que se o enquadramento irá seguir (negativo para nenhum);
-        xlim/ylim: limites de enquadramento;
+        lims: limites de enquadramento;
         fps: fps;
         vel: velocidade de reprodução;
         G: constante da gravitação universal (0 para sem gravidade);
@@ -53,13 +56,53 @@ class Sim:
         Adicionar objetos ou listan de objetos à simulação.
         (automaticamente atualiza a velociade orbital dos objetos em órbita)
     iterar()
-        Iteração simples usando método de Euler
+        Iteração simples usando método de Euler.
     simulaar(t, h=0.01)
         Executa diversas iterações e rotorna uma lista de passos.
     animar(salvar_em='')
-        Anima, mostra e salva simulações.
+        Anima, exibe e salva simulações.
     reset()
         Reinicia configurações e dados da simulação (limpa objetos).
+
+    Outros métodos
+    --------------
+    rastro(obj, inicio=0, parar=None, fechar=none, cor='tab:gray', ref=None)
+        Faz com que o objeto `obj` exiba o rastro simulado.
+    area_kepler(obj_central, satelite, inicio=0, parar=None, fechar=None,
+                cor='tab:cyan', opacidade=0.25, cor_borda='tab:blue')
+        Faz com que o objeto `satelite` forme uma setor para ilustrar a segunda lei de Kepler.
+    texto(texto, local=(0, 0), inicio=0, fechar=None, obj=None, cor='w', fonte='serif')
+        Cria um texto que pode ficar estático ou acompanhar um objeto `obj`.
+    seta(self, pos0=(0, 0), pos1=(0, 0), ref0=None, ref1=None, inicio=0, fechar=None, largura=0.1,
+         cor='tab:cyan', opacidade=1, cor_borda='tab:blue')
+        Cria uma seta que pode ser entre dois pontos estáticos ou relativos a objetos.
+
+    Exemplos
+    --------
+    Aqui um exemplo da estrutura do uso dessa classe e da simulação no geral:
+
+    # cria-se os objetos simuláveis
+
+    # cria-se um objeto de simulação
+
+    # configura a simulação usando o `.configs`
+
+    # adiciona-se os objetos pelo `.add_obj()`
+
+    # executa a simulação com `.simular()`
+
+    # põe-se objetos gráficos e plots extras
+
+    # compila e anima tudo com `.animar()`
+
+    Notas
+    -----
+    O atributo `.configs` é essencial para configurar parâmetros de simulação e animação, então deve ser configurado
+    o quanto antes, já que não adianta alterar `G` depois que a simulação já foi feita, embora os parâmetros estéticos
+    só precisam ser configurados após a animaçaõ mesmo.
+
+    Os métodos em 'Outros métodos' são todos 'plots extras', ou seja, objetos geometricos e meramente gráficos que não
+    tem nenhum efeito físico. Devem ser configuradas depois de feita a simulação, mas antes de feita a animação.
     """
     def __init__(self, herdar=None):
         """
@@ -90,11 +133,11 @@ class Sim:
 
             self._extra_plots = []  # lisat de funções plotando certas estruturas (como rastros)
 
-            # todo: ver como faz para centro de masa (função que retorna um CM com todos os objetos?)
+            # todo: ver como faz para centro de massa (função que retorna um CM com todos os objetos?)
 
     def add_obj(self, *args):
         """
-        Método para adiconar objetos a uma simulação.
+        Método para adicionar objetos a uma simulação.
 
         Parametros
         ----------
@@ -105,8 +148,9 @@ class Sim:
         -----
         Se o argumento não for de uma classe simulável suportada, será printada uma mensagem avisando isto e ele
         não será adicionado.
+
         Se o objeto tiver satélites com velocidade orbital não configurada, ela será cnfigurada automaticamente
-        usando o G da simulação.
+        usando o G da simulação, então altere o G antes de adicionar objetos, por favor.
         """
         classes = [csa.Particula] + csa.Particula.__subclasses__()  # litsa de todas as classes suportadas na simulação
         add = []  # lista que reune todos os objetos que serão adicionados
@@ -134,6 +178,7 @@ class Sim:
             if n is not obj:
                 d = obj.s - n.s  # vetor distancia
                 ar += - np.array(gc * n.m / (d[0] ** 2 + d[1] ** 2) * d / np.linalg.norm(d))
+                # todo: fazer com que cada calculo de força específico seja opcional
                 # aceleração gravitacional, multiplicada pelo versor da distância
                 # aqui se colocaria outras forças a serem adicionadas a `ar`
         return ar
@@ -149,8 +194,8 @@ class Sim:
             Lista de vetores com posições de cada objeto. A ordem dos vetores correpsonde a ordem em que o objeto foi
             adicionado.
 
-        Raises
-        ------
+        Raise
+        -----
         NameError
             Não há nenhum objeto nesta simulação. Tente adicionar objetos usando o método `.add_obj()`.
 
@@ -173,7 +218,7 @@ class Sim:
 
     def simular(self, t, h=0.01):
         """
-        Executa diversas iterações e retorna um histórico delas. Ao final atualiza as listas `dados` e `tempos`.
+        Executa diversas iterações e retorna um histórico delas. Ao final atualiza as listas `.dados` e `.tempos`.
 
         Parâmetros
         ----------
@@ -191,6 +236,11 @@ class Sim:
         Assim, em `dados[i,o,d]` temos que `i` é o índice de cada Iteração;
         `o`, o índice de cada Objeto na dada iteração;
         e `d` a Direção/coordenada de cada objeto em cada iteração.
+
+        Raise
+        -----
+        ValueError
+            Nenhum objeto adicionado a simulação atual.
 
         Ver também
         ----------
@@ -219,35 +269,39 @@ class Sim:
 
     def animar(self, salvar_em=''):
         """
-        Plota animação 2D, opcionalmente salva, e a exibe, com base em matplotlib,
+        Plota animação 2D, salva (opcionalmente) e a exibe, com base em matplotlib,
         tendo diversas opções de customização, no dicionário ´configs´.
+
         .. warning:: Para salvar animações se faz necessário ter instalado ffmpeg.
 
         Parâmetros
         ----------
         salvar_em : string, opcional
             string com diretório do arquivo a ser salvado. Não alterando essa variável nada será salvo.
+
             .. warning:: O diretório deve incluir o nome do arquivo e ser num fomrato suportado
+
             Ver variável `formatos_suportados`
 
-        Raises
-        ------
+        Raise
+        -----
         NameError
             Não há dados de simulação neste objeto. Tente fazer uma simulação usando o método `.simular()`.
         UserWarnig
             Este formato de vídeo não é suportado.
             Tente acessar simul.formatos_suportados para ver uma série de opções.
             Sugerido: .mp4
+
             Erro levantado para substuir o erro da matplolib de quando o formato de vídeo a ser salvo não é supoirtado.
 
 
         Exemplos
         --------
-        Ver seção executável do script `example.py`.
+        Ver script `example.py`.
 
         Notas
         -----
-        Para configurações de animação/vídeo, ver `Sim.configs()`.
+        Para configurações de animação/vídeo, ver `Sim.configs`.
 
         Ver também
         ----------
@@ -394,6 +448,48 @@ class Sim:
         return t0, t1, t_max
 
     def rastro(self, obj, inicio=0, parar=None, fechar=None, cor='tab:gray', ref=None):
+        """
+        Método que cria objeto gráfico de rastro. Como um percurso feito pela partícula, que altera ao longo do tempo.
+
+        Ele começa a ser exibido em t=`inicio`, para de se atualizar em t=`parar` e deixa de ser exibido em t=`fechar`.
+
+        Se `parar` for None, a animação só irá pausar em t=`fechar`.
+        Se `fechar` for None, o objeto só deixará de ser exibido no final da simulação.
+
+        Parâmetros
+        ----------
+        obj : objeto de classe simulável, int ou str
+            Objeto, índice ou nome do objeto que irá deixar o rastro.
+        inicio : int ou float, padrão=0
+            Instante em que a animação deste objeto gráfico começa.
+        parar : int, float ou None, padrão=None
+            Instante em que a animação deste objeto gráfico pausa, ou seja, 'congela'.
+        fechar : int, float ou None, padrão=None
+            Instante em que este objeto gráfico para de ser exibido.
+        cor : string, padrão='tab:gray'
+            Cor do rastro. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+        ref : objeto de classe simulável, int ou str, padrão=None
+            Objeto, índice ou nome do objeto que servirá de referencial para as posições do rastro.
+
+        Notas
+        -----
+        As inputs de tempo e de objetos são todas tratadas pelos mesmos métodos internos `._get_index(o)` e
+        `._extra_plot_time_params(inicio, parar, fechar)`.
+        O que significa que todas tratam da mesma forma as suas inputs de objetos e tempos:
+        pode entrar com qualuqer objeto de classe reconhecida, índice deste objeto na simulação ou `.nome` do objeto e
+        estes serão reconhecidos da mesma forma (internamente trabalhamos com índice);
+        de forma similar, os tratmentos para `inicio`, `parar` e `fechar` são sempre os mesmos que o descrito (quando
+        o método não usa `parar` isto é simplesmente ignorado.
+
+        Este e os ourtos métodos que criam objetos gráficos adicionam uma função a uma lista de funções de plot extras,
+        executada cada frame em `.animar()`.
+
+        Ver também
+        ----------
+        .simular()
+        .animar()
+        coisas.Particula
+        """
         # método que cria função de plotagem de rastro
         ind = self._get_index(obj)  # objeto a deixar rastro
         ref = self._get_index(ref)  # objeto de referencial para o rastro
@@ -431,9 +527,45 @@ class Sim:
 
         self._extra_plots.append(_plotar_rastro)  # retorna a função de plotagem
 
-    def area_kepler(self, obj_central, satelite, inicio=0, parar=None, fechar=None,
+    def area_kepler(self, foco, satelite, inicio=0, parar=None, fechar=None,
                     cor='tab:cyan', opacidade=0.25, cor_borda='tab:blue'):
-        centro = self._get_index(obj_central)
+        """
+        Método que cria um polígono de muitos lados para parecer um setor de elipse que começa no inicio do rastro do
+        satélite e termina no foco do setor, e então fechando o polígono.
+
+        Para mais detalhes dos parâmetros, ver `.rastro()`.
+
+        Parâmetros
+        ----------
+        foco :  objeto de classe simulável, int ou str
+            Objeto, índice ou nome do objeto que servirá como foco para o setor de elíptica gerado.
+        satelite : objeto de classe simulável, int ou str
+            Objeto, índice ou nome do objeto que atuará como 'planeta' orbitando o foco.
+        inicio : int ou float, padrão=0
+            Instante em que a animação deste objeto gráfico começa.
+        parar : int, float ou None, padrão=None
+            Instante em que a animação deste objeto gráfico pausa, ou seja, 'congela'.
+        fechar : int, float ou None, padrão=None
+            Instante em que este objeto gráfico para de ser exibido.
+        cor : string, padrão='tab:cyan'
+            Cor da área. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+        opacidade : float, padrão=0.25
+            O 'alpha', a intensidade, da cor. 0 para mais opaco e 1 para mais sólido. Detalhes especificados em
+            `coisas.Particula`.
+        cor_borda : string, padrão'tab:blue'
+            Cor da borda da área exibida. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+
+        Notas
+        -----
+        Vale lembrar a segunda lei de Kepler: o vetor que liga um planeta e o Sol varre áreas iguais em tempos iguais.
+        Ou seja, para uma mesma órbita, qualquer setor de elipse com um mesmo delta_t terá a mesma área.
+
+        Ver também
+        ----------
+        .rastro()
+            Com todos os detalhes dos funcionamentos de métodos de animação de objetos gráficos.
+        """
+        centro = self._get_index(foco)
         sat = self._get_index(satelite)
         t0, t1, t_max = self._extra_plot_time_params(inicio, parar, fechar)
         print(t0, t1, t_max)
@@ -466,6 +598,35 @@ class Sim:
 
     def texto(self, texto, local=(0, 0), inicio=0, fechar=None, obj=None,
               cor='w', fonte='serif'):
+        """
+        Cria um texto estático na animação. No entanto, se um `obj` for definido, o texto tomará esse novo objeto como
+        referencial para sua posição.
+
+        Para mais detalhes dos parâmetros, ver `.rastro()`.
+
+        Parâmetros
+        ----------
+        texto : string
+            Texto que será exibido. Tem suporte para formatação LaTex (entretanto use daus barras invertidas ao invés de
+            apenas uma). A tipografia não será necessariamente igual a do LaTeX, infelizmente :(
+        local : array_like, padrão=(0, 0)
+            Posição relativa do texto.
+        inicio : int ou float, padrão=0
+            Instante em que a animação deste objeto gráfico começa.
+        fechar : int, float ou None, padrão=None
+            Instante em que este objeto gráfico para de ser exibido.
+        obj : objeto de classe simulável, int ou str, padrão=None
+            Objeto, índice ou nome do objeto que pode servir de referencial para o movimento do texto.
+        cor : string, padrão='w'
+            Cor do rastro. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+        fonte : string, padrão='serif'
+            Padrão de fonte do matplotlib. Detalhes em: https://matplotlib.org/stable/tutorials/text/text_props.html
+
+        Ver também
+        ----------
+        .rastro()
+            Com todos os detalhes dos funcionamentos de métodos de animação de objetos gráficos.
+        """
         ref_ind = self._get_index(obj)
         rel_pos = np.array(local)  # posição relativa (se tiver objeto como referencial)
         t0, _, t_max = self._extra_plot_time_params(inicio, None, fechar)
@@ -486,29 +647,65 @@ class Sim:
 
         self._extra_plots.append(_plotar_texto)  # retorna a função de plotagem
 
-    def seta(self, pos0=(0, 0), pos1=(0, 0), ref0=None, ref1=None, inicio=0, fechar=None,
+    def seta(self, pos_a=(0, 0), pos_b=(0, 0), ref_a=None, ref_b=None, inicio=0, fechar=None,
              largura=0.1, cor='tab:cyan', opacidade=1, cor_borda='tab:blue'):
-        pos0 = np.array(pos0)
-        pos1 = np.array(pos1)
-        o0_ind = self._get_index(ref0)
-        o1_ind = self._get_index(ref1)
+        """
+        Cria uma seta do ponto `a` ao ponto `b`. O ponto pode ser apenas `pos_a` ou, se `ref_a` for definido,
+        a = pos_a + pos_a
+
+        A seta pode ter cor, cor da borda, opacidade e largura (em relação ao comprimento) alteradas.
+
+        Parâmetros
+        ----------
+        pos_a : array_like, padrão=(0, 0)
+            Posição relativa do ponto a.
+        pos_b : array_like, padrão=(0, 0)
+            Posição relativa do ponto b.
+        ref_a : objeto de classe simulável, int ou str, padrão=None
+            Objeto, índice ou nome do objeto que servirá de referência para o ponto a.
+        ref_b : objeto de classe simulável, int ou str, padrão=None
+            Objeto, índice ou nome do objeto que servirá de referência para o ponto b.
+        inicio : int ou float, padrão=0
+            Instante em que a animação deste objeto gráfico começa.
+        fechar : int, float ou None, padrão=None
+            Instante em que este objeto gráfico para de ser exibido.
+        largura : int ou float, padrão=0.1
+            Largura da seta. Para mais detalhes, ver:
+            https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.arrow.html
+        cor : string, padrão='tab:cyan'
+            Cor da área. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+        opacidade : float, padrão=1
+            O 'alpha', a intensidade, da cor. 0 para mais opaco e 1 para mais sólido. Detalhes especificados em
+            `coisas.Particula`.
+        cor_borda : string, padrão'tab:blue'
+            Cor da borda da área exibida. Padrão de cores da matplotlib. Ver `coisas.Particula`.
+
+        Ver também
+        ----------
+        .rastro()
+            Com todos os detalhes dos funcionamentos de métodos de animação de objetos gráficos.
+        """
+        pos_a = np.array(pos_a)
+        pos_b = np.array(pos_b)
+        oa_ind = self._get_index(ref_a)
+        ob_ind = self._get_index(ref_b)
         t0, _, t_max = self._extra_plot_time_params(inicio, None, fechar)
 
         def _plotar_seta(p):
             t = self.tempos[p]  # vê o segundo da iteração atual
             if t0 < t < t_max and p > 0:  # se o intervalo já tiver passado, não plota o gráfico
                 dados = np.array(self.dados)  # transforma os dados em array para melhor manipulação
-                if ref0 is None:  # se ref0 é None, o referencial é 0
-                    obj0 = np.zeros(2)
+                if ref_a is None:  # se ref0 é None, o referencial é 0
+                    obj_a = np.zeros(2)
                 else:  # senão, o referencial é a posição atual
-                    obj0 = np.array(dados[p, o0_ind])
-                if ref1 is None:  # idem do sobrescrito
-                    obj1 = np.zeros(2)
+                    obj_a = np.array(dados[p, oa_ind])
+                if ref_b is None:  # idem do sobrescrito
+                    obj_b = np.zeros(2)
                 else:  # bis in idem
-                    obj1 = np.array(dados[p, o1_ind])
+                    obj_b = np.array(dados[p, ob_ind])
 
-                p = pos0 + obj0  # calcula a posição de partida do vetor somado ao referencial
-                delta_p = pos1 + obj1 - p  # o vetor em se partindo de p com referencial a outro objeto
+                p = pos_a + obj_a  # calcula a posição de partida do vetor somado ao referencial
+                delta_p = pos_b + obj_b - p  # o vetor em se partindo de p com referencial a outro objeto
 
                 plt.arrow(p[0], p[1], delta_p[0], delta_p[1],
                           facecolor=cor, alpha=opacidade, edgecolor=cor_borda, width=largura)

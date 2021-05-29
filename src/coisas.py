@@ -37,6 +37,10 @@ class Particula:
     em_orbita(s, m=1.0, tipo='particula', sentido=True, e=0.0, nome='', cor='tab:blue')
         Retorna um objeto de classe especificada em órbita na posição especificada.
 
+    Ver também
+    ----------
+    sim.Sim
+
     """
     def __init__(self, s=(0, 0), v=(0, 0), m=1.0, nome='', cor='tab:blue'):
         """
@@ -158,14 +162,14 @@ class Particula:
             # define a velocidade orbital do satélite (sat[0] é o objeto e sat[1] o sentido de rotação)
         del self._sats
 
-# tarefas organizadas em ordem de execução
-# todo: atualizar documentação. Documentação pendente:
-#  métodos de Sim(); Sim.config['lims'] e coisas da classe; Atualizar README.md;
+# tarefas organizadas em ordem de prioridade de execução
+# todo: transformar configuração de limites como uma função extra na lista de funções exectuada por sim.Sim.animar(),
+#  permitindo configurar enquadramento dinâmico futuramente
 # todo: criar opção de customizar pontos exibidos das partículas
 # todo: módulo com calculos. Ex: período orbital (pegar dados da primeira posição da simulação)
 # todo: Sim.simular_objs(): função com toda a rotina de simulação simplificada
 # todo: criar propriedades elétricas
-# todo: classe circulo, com simulações de gases. Talvez isto requira módulo para colisões
+# todo: classe circulo, com simulações de gases (não optimizado)
 # todo: criar objetos continuos estáticos colidíveis
 # todo: criar arrasto
 # todo: módulo com operações optimizadas, como ditsâncias, colisões, etc.

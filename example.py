@@ -86,7 +86,7 @@ elif sis == '3':
 
     sistema.simular(20)  # executa a simulação or 20s usando o passo padrão de h=0.01s
 
-    sistema.seta(ref0='marte', ref1='Sol', largura=5)  # cria uma seta (bem feia) de largura especificada partindo
+    sistema.seta(ref_a='marte', ref_b='Sol', largura=5)  # cria uma seta (bem feia) de largura especificada partindo
     #  de marte ao Sol
 
     sistema.animar()  # compila e mostra a animação
