@@ -14,7 +14,7 @@ formatos_suportados = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv',
     Lista de formatos suportados para serem salvos. Outros podem funcionar mas não garanto.
 """
 
-from src import coisas as csa
+from src.capym import coisas as csa
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
@@ -133,8 +133,6 @@ class Sim:
 
             self._extra_plots = []  # lisat de funções plotando certas estruturas (como rastros)
 
-            # todo: ver como faz para centro de massa (função que retorna um CM com todos os objetos?)
-
     def add_obj(self, *args):
         """
         Método para adicionar objetos a uma simulação.
@@ -178,7 +176,6 @@ class Sim:
             if n is not obj:
                 d = obj.s - n.s  # vetor distancia
                 ar += - np.array(gc * n.m / (d[0] ** 2 + d[1] ** 2) * d / np.linalg.norm(d))
-                # todo: fazer com que cada calculo de força específico seja opcional
                 # aceleração gravitacional, multiplicada pelo versor da distância
                 # aqui se colocaria outras forças a serem adicionadas a `ar`
         return ar
@@ -355,9 +352,6 @@ class Sim:
                 plt.ylim(ylim + pos[seguir, 1])
 
             plt.scatter(pos[:, 0], pos[:, 1], c=cores)  # plota os pontos
-
-            # todo: adicionar acompanhar centro de massa
-            # todo: criar limites adaptáveis
 
         anim = FuncAnimation(plt.gcf(), func_animar,
                              frames=int(t_max / dt), interval=1000 / (vel * fps))  # faz o loop de animação
