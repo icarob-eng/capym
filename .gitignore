@@ -180,3 +180,6 @@ atlassian-ide-plugin.xml
 # Project outputs (may add more)
 *.mp4
 *.gif
+
+# JetBrains IDE's
+.idea
