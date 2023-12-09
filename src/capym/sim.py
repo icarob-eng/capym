@@ -1,3 +1,16 @@
+import sys
+import copy
+import numpy as np
+
+from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation, writers
+from collections.abc import Iterable
+from collections import OrderedDict
+
+from src.config.background_style_config import BackgroundStyle
+from src.config.simulation_config import SimulationConfig
+from src.objects.object import Object
+
 """
 Módulo com classe Sim para simulações.
 
@@ -14,257 +27,79 @@ formatos_suportados = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv',
     Lista de formatos suportados para serem salvos. Outros podem funcionar mas não garanto.
 """
 
-from src.capym import coisas as csa
-import numpy as np
-from matplotlib import pyplot as plt
-from matplotlib.animation import FuncAnimation, writers
 
-formatos_suportados = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv', 'gif', 'm4v', 'mp2', 'mp3', 'mp4',
-                       'mjpeg', 'mpeg', 'mpegets', 'mov', 'mkv', 'mxf', 'mxf_d10', 'mxf_opatom', 'nsv', 'null', 'ogg',
-                       'ogv', 'rm', 'roq', 'vob', 'webm')
+supported_formats = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv', 'gif', 'm4v', 'mp2', 'mp3', 'mp4',
+                     'mjpeg', 'mpeg', 'mpegets', 'mov', 'mkv', 'mxf', 'mxf_d10', 'mxf_opatom', 'nsv', 'null', 'ogg',
+                     'ogv', 'rm', 'roq', 'vob', 'webm')
 
 
-class Sim:
-    """
-    Classe na qual ficam salvos os dados e configurações de simulação. É possível herdar valores já configurados, copiar
-    uma simulação simplesmente passando a instância da qual vai ser herdada os valores como parâmetro no construtor da
-    classe.
+class Simulation(SimulationConfig):
 
-    Atributos
-    ---------
-    objs : list, padrão=[]
-        Lista com objetos adiconados à simulação.
-    dados : list, padrão=[]
-        Lista com posições dos objetos a cada iteração.
-    tempos : list, padrão=[]
-        Lista com instantes de cada iteração.
-    h : float, padrão=0.01
-        Passo entre ieterações (em segundos).
-    configs : dict, padrão={'estilo': 'dark_background', 'seguir': -1, 'xlim': (-5, 5), 'ylim': (-5, 5), 'fps': 30,
-                            'vel': 1, 'G': 1}
-        Configurações extras da simulação. Sendo elas:
-        estilo: estilo de plot da matplotlib;
-        seguir: ínidce do objeto que se o enquadramento irá seguir (negativo para nenhum);
-        lims: limites de enquadramento;
-        fps: fps;
-        vel: velocidade de reprodução;
-        G: constante da gravitação universal (0 para sem gravidade);
+    def __init__(self, interval: float, objects: list[Object],
+                 background_config: BackgroundStyle, final_moment: float, limits: tuple[tuple, tuple],  *args):
+        super().__init__(interval, objects, background_config, final_moment, limits)
+        self.__objects: list[Object] = []
+        self.add_object(args)
 
-    Métodos
-    -------
-    add_obj(*args)
-        Adicionar objetos ou listan de objetos à simulação.
-        (automaticamente atualiza a velociade orbital dos objetos em órbita)
-    iterar()
-        Iteração simples usando método de Euler.
-    simulaar(t, h=0.01)
-        Executa diversas iterações e rotorna uma lista de passos.
-    animar(salvar_em='')
-        Anima, exibe e salva simulações.
-    reset()
-        Reinicia configurações e dados da simulação (limpa objetos).
+        self.__historic: OrderedDict[tuple[float, float], list[Object]] = OrderedDict({
+            (self.initial_moment, self.interval): copy.copy(self.__objects)
+        })
 
-    Outros métodos
-    --------------
-    rastro(obj, inicio=0, parar=None, fechar=none, cor='tab:gray', ref=None)
-        Faz com que o objeto `obj` exiba o rastro simulado.
-    area_kepler(obj_central, satelite, inicio=0, parar=None, fechar=None,
-                cor='tab:cyan', opacidade=0.25, cor_borda='tab:blue')
-        Faz com que o objeto `satelite` forme uma setor para ilustrar a segunda lei de Kepler.
-    texto(texto, local=(0, 0), inicio=0, fechar=None, obj=None, cor='w', fonte='serif')
-        Cria um texto que pode ficar estático ou acompanhar um objeto `obj`.
-    seta(self, pos0=(0, 0), pos1=(0, 0), ref0=None, ref1=None, inicio=0, fechar=None, largura=0.1,
-         cor='tab:cyan', opacidade=1, cor_borda='tab:blue')
-        Cria uma seta que pode ser entre dois pontos estáticos ou relativos a objetos.
+    @property
+    def objects(self) -> list:
+        return self.__objects
 
-    Exemplos
-    --------
-    Aqui um exemplo da estrutura do uso dessa classe e da simulação no geral:
-
-    # cria-se os objetos simuláveis
-
-    # cria-se um objeto de simulação
-
-    # configura a simulação usando o `.configs`
-
-    # adiciona-se os objetos pelo `.add_obj()`
-
-    # executa a simulação com `.simular()`
-
-    # põe-se objetos gráficos e plots extras
-
-    # compila e anima tudo com `.animar()`
-
-    Notas
-    -----
-    O atributo `.configs` é essencial para configurar parâmetros de simulação e animação, então deve ser configurado
-    o quanto antes, já que não adianta alterar `G` depois que a simulação já foi feita, embora os parâmetros estéticos
-    só precisam ser configurados após a animaçaõ mesmo.
-
-    Os métodos em 'Outros métodos' são todos 'plots extras', ou seja, objetos geometricos e meramente gráficos que não
-    tem nenhum efeito físico. Devem ser configuradas depois de feita a simulação, mas antes de feita a animação.
-    """
-    def __init__(self, herdar=None):
-        """
-        Parametros
-        ----------
-        herdar
-            Pode herdar dados e configurações de outras simulações, bastando colocar a oujtra instãncia aqui quando
-            for criar esta.
-        """
-        if isinstance(herdar, Sim):  # possibilita herdar as configurações de outra simulação
-            self.objs = herdar.objs
-            self.dados = herdar.dados
-            self.tempos = herdar.tempos
-            self.h = herdar.h
-            self.configs = herdar.configs
-            self._extra_plots = []
-        else:
-            self.objs = []  # lista de objetos inclusos na simulação
-            self.dados = []  # dados gerados
-            self.tempos = []  # insatantes de cada passo
-            self.h = 0.01  # passo da simulação (padrão como 0.01)
-            self.configs = {'estilo': 'dark_background',  # estilo de fundo
-                            'seguir': None,  # objeto seguido
-                            'lims': ((-5, 5), (-5, 5)),  # limites de enquadramento
-                            'fps': 30, 'vel': 1,
-                            'G': 1}  # Constante da gravitação universal; real = 6.6708e-11; 0 para sem gravidade
-            # dicionário de configurações da simulação
-
-            self._extra_plots = []  # lisat de funções plotando certas estruturas (como rastros)
-
-    def add_obj(self, *args):
-        """
-        Método para adicionar objetos a uma simulação.
-
-        Parametros
-        ----------
-        args
-            Objeto ou lista de objetos (suporta vários argumentos ou um iterável). O objeto precisa ser simulável.
-
-        Notas
-        -----
-        Se o argumento não for de uma classe simulável suportada, será printada uma mensagem avisando isto e ele
-        não será adicionado.
-
-        Se o objeto tiver satélites com velocidade orbital não configurada, ela será cnfigurada automaticamente
-        usando o G da simulação, então altere o G antes de adicionar objetos, por favor.
-        """
-        classes = [csa.Particula] + csa.Particula.__subclasses__()  # litsa de todas as classes suportadas na simulação
-        add = []  # lista que reune todos os objetos que serão adicionados
-        for a in args:
-            try:  # testa se o argumento é iterável ou um objeto
-                iter(a)
-                for obj in a:  # adiciona todos os objetos do iterável à lista `add`
-                    add.append(obj)
-            except TypeError:
-                add.append(a)  # adiciona o objeto à lista `add`
-
-        for obj in add:  # testa e adiciona todos os objetos reunidos
-            for c in classes:
-                if isinstance(obj, c):  # checa se o objeto é de uma classe suportada
-                    self.objs.append(obj)
-                    obj._sim = self
-                    obj._def_sats()
+    def add_object(self, *args):
+        if isinstance(args, Iterable):
+            for obj in args:
+                if obj is not None and isinstance(obj, Object):
+                    self.__objects.append(obj)
                 else:
-                    print(f'{obj}, não é um objeto simulável')
+                    print(f"{obj} is not a valid argument.", file=sys.stderr)
 
-    def _ar(self, obj):
-        gc = self.configs['G']  # pega o valor da constante da gravitação universal
-        ar = np.zeros(2)
-        for n in self.objs:
-            if n is not obj:
-                d = obj.s - n.s  # vetor distancia
-                ar += - np.array(gc * n.m / (d[0] ** 2 + d[1] ** 2) * d / np.linalg.norm(d))
-                # aceleração gravitacional, multiplicada pelo versor da distância
-                # aqui se colocaria outras forças a serem adicionadas a `ar`
-        return ar
+        elif isinstance(args, Object):
+            self.__objects.append(args)
 
-    def iterar(self):
-        """
-        Iteração básica de uma simulação usando método de Euler. Atualiza todos os valores dos objetos um a um.
-        O tamanho do passo é o atributo `h` da simulação
+        else:
+            print(f"{args} is not a valid argument.", file=sys.stderr)
 
-        Retorna
-        -------
-        ndarray
-            Lista de vetores com posições de cada objeto. A ordem dos vetores correpsonde a ordem em que o objeto foi
-            adicionado.
+    def repeated(self) -> None:
+        if len(self.__objects) == 0:
+            raise NameError("This simulation does not contains any object.")
 
-        Raise
-        -----
-        NameError
-            Não há nenhum objeto nesta simulação. Tente adicionar objetos usando o método `.add_obj()`.
+        with next(reversed(self.__historic)) as ((frame_moment, frame_interval), objects):
+            new_frame_moment = frame_moment + frame_interval
 
-        Notas
-        -----
-        Quanto menor o valor de `h` maior precisão/reslução da simulação.
-        Um `h` negativo implica em uma simulação voltando no tempo *(teoricamente)*.
-        """
+            objects_with_new_accelerations: list[Object] = []
+
+            for outer_object in objects:
+                for inner_object in objects:
+                    if outer_object.uuid != inner_object.uuid:
+                        outer_object.acceleration += outer_object.gravitational_acceleration(inner_object,
+                                                                                             self.constant_of_gravitation)
+                objects_with_new_accelerations.append(outer_object)
+
+            temp_historic = OrderedDict({(new_frame_moment, frame_interval): []})
+
+            for obj in objects_with_new_accelerations:
+                obj.velocity += obj.acceleration * frame_interval
+                obj.position += obj.velocity * frame_interval
+                temp_historic[(new_frame_moment, frame_interval)] += obj
+
+            self.__historic += temp_historic
+
+    def simular(self):
         if len(self.objs) == 0:
-            raise NameError('Não há nenhum objeto nesta simulação.'
-                            ' Tente adicionar objetos usando o método `.add_obj()`.')
-        h = self.h
-        s_list = []  # lista com posição dos objetos em cada iteração
-        for o in self.objs:  # calcula os estados para cada objeto
-            # atualiza o valor das variáveis do objeto o:
-            o.s = o.s + h * o.v
-            o.v = o.v + h * self._ar(o)
-            s_list.append(o.s)
-        return np.array(s_list)
+            raise ValueError('No objects added to the current simulation.')
+        print(f"Simulating {len(self.objs)}")
+        for instant in np.arange(0, self.initial_moment, self.interval):
+            if instant < self.final_moment:
+                print(f"Simulating instant {instant}.")
+                self.repeated()
+            else:
+                break
 
-    def simular(self, t, h=0.01):
-        """
-        Executa diversas iterações e retorna um histórico delas. Ao final atualiza as listas `.dados` e `.tempos`.
-
-        Parâmetros
-        ----------
-        t : int ou float
-            Tempo total da simulação em segundos.
-        h: float, padrão= 1/30
-            Tamanho do passo entre cada iteração em segundos.
-
-        Notas
-        -----
-        Essa função transforma `dados` em uma matriz de três dimensões,
-        sendo a primeira coordenada uma lista com cada iteração;
-        a segunda, uma lista de vetores posição de cada objeto por iteração;
-        e a terceira a devida coordenada `x` ou `y`.
-        Assim, em `dados[i,o,d]` temos que `i` é o índice de cada Iteração;
-        `o`, o índice de cada Objeto na dada iteração;
-        e `d` a Direção/coordenada de cada objeto em cada iteração.
-
-        Raise
-        -----
-        ValueError
-            Nenhum objeto adicionado a simulação atual.
-
-        Ver também
-        ----------
-        iterar()
-        """
-        if len(self.objs) == 0:
-            raise ValueError('Nenhum objeto adicionado a simulação atual.')
-        t_hist = np.arange(0, t, h)  # cria uma lista de instantes no intervalo e passo definido
-        if len(self.tempos) == 0:  # se a lista tempos era vazia, sobscreve ela com t_hist
-            self.tempos = t_hist
-        else:  # senão, adiciona t_hist ao final de tempos
-            np.append(self.tempos, t_hist)
-        self.h = h  # atualiza o valor de passo utilizado
-
-        print('Calculando {} iterações e {} interações.'.format(len(t_hist), len(t_hist) * len(self.objs) ** 2))
-        s_hist = []  # lista com as posições dos objetos durante toda a simulação
-        for _ in t_hist:  # loop de iterações em cada instante
-            s_hist.append(self.iterar())  # adiciona as posições do frame à lista de iterações
-
-        if len(self.dados) == 0:  # se a lista dados era vazia, sobrescreve ela com s_hist
-            self.dados = np.array(s_hist)
-        else:  # senão, adicona s_hist ao final de dados
-            dados = self.dados.tolist()  # transforma em lista para não perder o formato
-            dados.append(s_hist)
-            self.dados = np.array(dados)
-
-    def animar(self, salvar_em=''):
+    def animar(self, target_path=''):
         """
         Plota animação 2D, salva (opcionalmente) e a exibe, com base em matplotlib,
         tendo diversas opções de customização, no dicionário ´configs´.
@@ -306,28 +141,17 @@ class Sim:
         Sim.configs
         """
         # configurações
-        plt.style.use(self.configs['estilo'])
-        xlim = self.configs['lims'][0]
-        ylim = self.configs['lims'][1]
-        seguir = self.configs['seguir']
-        vel = self.configs['vel']
-        fps = self.configs['fps']
+        plt.style.use(str(self.background_config))
+        xlim = self.limits[0]
+        ylim = self.limits[1]
 
-        if len(self.tempos) == 0:  # se uma simulação não tiver sido feita ele levanta esse erro
-            raise NameError('Não há dados de simulação neste objeto.'
-                            ' Tente fazer uma simulação usando o método `.simular()`.')
-        else:
-            dados = self.dados
-            tempos = self.tempos
-
-        h = self.h
-        t_max = tempos[-1] + h  # retoma duração da simulação
-        dt = (1 / fps)  # intervalo entre frames
-        print('Compilando vídeo. Duração: {}s, numero de frames: {}'.format(t_max / vel, int(t_max / dt)))
+        if len(self.__historic) == 0:
+            raise NameError('Não há dados de simulação neste objeto.Tente fazer uma simulação usando o método '
+                            '`.simular()`.')
 
         cores = []
-        for o in self.objs:
-            cores.append(o.cor)
+        for o in self.objects:
+            cores.append(object)
 
         def func_animar(f):  # gerador de função animar. f é o frame atual
             t = f * dt * vel  # instante atual
@@ -355,10 +179,10 @@ class Sim:
 
         anim = FuncAnimation(plt.gcf(), func_animar,
                              frames=int(t_max / dt), interval=1000 / (vel * fps))  # faz o loop de animação
-        if salvar_em != '':
-            formato = salvar_em.split('.')[-1]  # retorna o texto após o último ponto do diretório
+        if target_path != '':
+            formato = target_path.split('.')[-1]  # retorna o texto após o último ponto do diretório
             salvar = True
-            if formato not in formatos_suportados:  # checa se o formato está na lista de suportados
+            if formato not in supported_formats:  # checa se o formato está na lista de suportados
                 r = input(f'Este formato de vídeo, \'.{formato}\' pode não ser suportado.'
                           f' Tentar mesmo assim? [S/N]\n->')
                 if r != 'S':
@@ -369,8 +193,8 @@ class Sim:
                 if salvar:  # não tenta salvar a animação se o usuário esitir, acima
                     writer = writers['ffmpeg']
                     escritor = writer(fps=fps)
-                    anim.save(salvar_em, escritor)  # salva a animação usando ffmpeg
-                    print(f'Vídeo salvo em {salvar_em}')
+                    anim.save(target_path, escritor)  # salva a animação usando ffmpeg
+                    print(f'Vídeo salvo em {target_path}')
             except UnicodeDecodeError:
                 raise UserWarning('Este formato de vídeo não é suportado.'
                                   '\nTente acessar simul.formatos_suportados para ver uma série de opções.'
@@ -509,6 +333,7 @@ class Sim:
         ind = self._get_index(obj)  # objeto a deixar rastro
         ref = self._get_index(ref)  # objeto de referencial para o rastro
         t0, t1, t_max = self._extra_plot_time_params(inicio, parar, fechar)
+
         # funções de tratamento de inputs
 
         def _plotar_rastro(p):  # função que plota o gráfico do rastro do momento inicial t0 até o atual t
@@ -686,6 +511,7 @@ class Sim:
         ref_ind = self._get_index(obj)
         rel_pos = np.array(local)  # posição relativa (se tiver objeto como referencial)
         t0, _, t_max = self._extra_plot_time_params(inicio, None, fechar)
+
         # funções para tratar input
 
         def _plotar_texto(p):

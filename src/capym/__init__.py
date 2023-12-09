@@ -13,4 +13,4 @@ coisas
     Possui objetos simuláveis em `sim`.
 """
 
-__all__ = ['sim', 'coisas']
+__all__ = ['sim', 'particle.py']

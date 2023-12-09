@@ -23,16 +23,17 @@ O padrão para partícula com dados não alterados é s=(0,0), v=(0,0), m=1.
 
 ### Criando uma simulação
 É nas simulações que a física acontece, e também onde se é possível gerar e animar dados. Todavia primeiro é preciso adicionar um objeto à simulação (caso contrários teremos erros) usando o método `sim.add_obj()`:
+
 ```python
 from src.capym import *
 
-a = coisas.Particula(s=(1,0), v=(1,0), m=10)
-b = coisas.Particula(s=(-1,0), v=(-1,0), m=10)
+a = coisas.Particula(s=(1, 0), v=(1, 0), m=10)
+b = coisas.Particula(s=(-1, 0), v=(-1, 0), m=10)
 # criar duas partículas em posições quaisquer
 
 simul = sim.Sim()  # cria uma simulação
 
-simul.add_obj(a, b)  # adiciona as partículas à simulação
+simul.add_object(a, b)  # adiciona as partículas à simulação
 ```
 Depois podemos simular o movimento das partículas adicioandas, digamos, por 2s:
 ```python
@@ -53,16 +54,16 @@ Na verdade, o dicionário `Sim.configs` tem diversas configurações relevantes 
 
 ### Ilustrações extras
 Outras coisas podem ser adiocinadas à simulação que não tenhma nenhum efeito físico. Por exemplo, é possível ver o caminho que dois objetos de excentricidades diferentes percorrem com este código:
+
 ```python
 from src.capym import *
-
 
 c = coisas.Particula(m=100)
 a = c.em_orbita([0, -1], m=0, e=0, cor='tab:green')
 b = c.em_orbita([0, -1], m=0, e=0.7)
 s = sim.Sim()
 
-s.add_obj(a, b, c)
+s.add_object(a, b, c)
 
 s.simular(10)
 
@@ -70,7 +71,7 @@ s.rastro(a)
 s.rastro(b)
 
 s.configs['lims'] = ((-3, 3), (-3, 3))
-s.animar(salvar_em='ani.gif')
+s.animar(target_path='ani.gif')
 ```
 
 ![ani](https://user-images.githubusercontent.com/54824248/120056650-13dc0f80-c014-11eb-81f2-7075222cb400.gif)
@@ -97,6 +98,7 @@ Em linhas gerais é possível estabelecer alguns passos para exeutar uma simula�
 
 ## Exemplos
 Aqui outras simulações que já fiz. Esta primeira está é uma versão anterior da que está em `example.py`.
+
 ```python
 from src.capym import *
 
@@ -112,17 +114,19 @@ lis.append(coisas.Particula(s=[1, 0], v=[a, b]))
 lis.append(coisas.Particula(s=[0, 0], v=[-2 * a, -2 * b]))
 
 minhaSim = sim.Sim()  # cria simulação
-minhaSim.configs['xlim'] = (-2, 2)  #  altera o tamanho do enquadramento da simulação
+minhaSim.configs['xlim'] = (-2, 2)  # altera o tamanho do enquadramento da simulação
 minhaSim.configs['ylim'] = (-2, 2)
-minhaSim.add_obj(lis)  # adiciona a lista de objetos
+minhaSim.add_object(lis)  # adiciona a lista de objetos
 minhaSim.simular(10, 0.01)  # faz uma simulação de 10s com passo h=0.01s
-minhaSim.animar(salvar_em='C:/Users/Ícaro/Desktop/animação.gif')  # salva a animação num diretório específico
+minhaSim.animar(target_path='C:/Users/Ícaro/Desktop/animação.gif')  # salva a animação num diretório específico
 
 ```
+
 Resultado:
 
 ![animação](https://user-images.githubusercontent.com/54824248/117578528-2cb46d80-b0c5-11eb-8134-7cece530f3ad.gif)
 ---
+
 ```python
 from src.capym import *
 
@@ -132,14 +136,15 @@ planeta = sol.em_orbita(s=(10, 0), m=50)  # cria partícula em velocidade orbita
 lua = planeta.em_orbita(s=(11, 0), m=1)
 
 simul = sim.Sim()
-simul.add_obj(sol, planeta, lua)  # adiciona os objetos à simulação
+simul.add_object(sol, planeta, lua)  # adiciona os objetos à simulação
 simul.simular(t=10, h=0.0001)  # cria uma simulação de duração t e passo h
 
-simul.configs['xlim'] = (-15, 15)  #  altera o tamanho do enquadramento da animação
+simul.configs['xlim'] = (-15, 15)  # altera o tamanho do enquadramento da animação
 simul.configs['ylim'] = (-15, 15)
 
-simul.animar(salvar_em='C:/Users/Ícaro/Desktop/sla.gif')
+simul.animar(target_path='C:/Users/Ícaro/Desktop/sla.gif')
 ```
+
 Note que esta animação tem bem mais iterações por segundo (10 000) e também usa um método da classe partícula, o `.em_orbita`, que cria um objeto em órbita da instância que chamou o método.
 
 Em ambos exemplos temos alterações de bordas do enquadramento da animação.

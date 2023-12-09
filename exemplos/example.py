@@ -44,7 +44,7 @@ if sis == '1':
     # cria os objetos dentro de uma lista para facilitar o manuzeio
 
     minhaSim = sim.Sim()  # cria um objeto simulação
-    minhaSim.add_obj(lis)  # adiciona todos os objetos da lista a uma simulação
+    minhaSim.add_object(lis)  # adiciona todos os objetos da lista a uma simulação
     minhaSim.simular(5, h=0.0001)  # simula as interações num intervalo de 5s e um passo de 0.0001s
 
     minhaSim.configs['lims'] = ((-1.5, 1.5), (-1, 1))  # alterando enquadamento
@@ -60,7 +60,7 @@ elif sis == '2':
     # cria os objetos dentro de uma lista para facilitar o manuzeio
 
     minhaSim = sim.Sim()  # cria um objeto simulação
-    minhaSim.add_obj(lis)  # adiciona todos os objetos da lista a uma simulação
+    minhaSim.add_object(lis)  # adiciona todos os objetos da lista a uma simulação
     minhaSim.simular(10, 0.0001)  # simula as interações num intervalo de 10s e um passo de 0.0001s
 
     minhaSim.texto('Olha só, texto', (0.5, 0.5), obj=0)  # cria um texto na tela que acopanha o objeto de índice 0
@@ -79,7 +79,7 @@ elif sis == '3':
     #  fazendo com que isso seja possível
 
     sistema = sim.Sim()  # cria um objeto de simulação
-    sistema.add_obj(estrela, planeta, lua)  # adicona os astros criados à simulação
+    sistema.add_object(estrela, planeta, lua)  # adicona os astros criados à simulação
 
     sistema.configs['lims'] = ((-250, 250), (-250, 250))  # altera o enquadramento da simulação
     # (veja que os obejtos estão bem distantes)
@@ -98,7 +98,7 @@ elif sis == '4':
     # cria uma particula em órbita, com cor verde. A excentricidade orbital é 0.9
 
     s = sim.Sim()  # cria um objeto de simulação
-    s.add_obj(a, b)  # adiciona os objetos criados à simulação
+    s.add_object(a, b)  # adiciona os objetos criados à simulação
 
     s.simular(20)  # executa a simulação or 20s usando o passo padrão de h=0.01s
 
