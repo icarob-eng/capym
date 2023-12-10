@@ -7,8 +7,9 @@ No momento ele apenas trata de interações gravitacionais bidimensionais de par
 
 ## Funcionamento
 Para usar este projeto precisa-se fazer mão de duas classes importantes: `coisas.Particula` e `sim.Sim`. A primeira nos dá um objeto a ser simulado e a segunda nos dá uma simulação. Para criar uma partícula e uma simulação novas com as configurações padrão, basta fazer:
+
 ```python
-from src.capym import *
+from src.main import *
 
 minha_particula = coisas.Particula()
 minha_sim = sim.Sim()
@@ -25,7 +26,7 @@ O padrão para partícula com dados não alterados é s=(0,0), v=(0,0), m=1.
 É nas simulações que a física acontece, e também onde se é possível gerar e animar dados. Todavia primeiro é preciso adicionar um objeto à simulação (caso contrários teremos erros) usando o método `sim.add_obj()`:
 
 ```python
-from src.capym import *
+from src.main import *
 
 a = coisas.Particula(s=(1, 0), v=(1, 0), m=10)
 b = coisas.Particula(s=(-1, 0), v=(-1, 0), m=10)
@@ -56,7 +57,7 @@ Na verdade, o dicionário `Sim.configs` tem diversas configurações relevantes 
 Outras coisas podem ser adiocinadas à simulação que não tenhma nenhum efeito físico. Por exemplo, é possível ver o caminho que dois objetos de excentricidades diferentes percorrem com este código:
 
 ```python
-from src.capym import *
+from src.main import *
 
 c = coisas.Particula(m=100)
 a = c.em_orbita([0, -1], m=0, e=0, cor='tab:green')
@@ -100,7 +101,7 @@ Em linhas gerais é possível estabelecer alguns passos para exeutar uma simula�
 Aqui outras simulações que já fiz. Esta primeira está é uma versão anterior da que está em `example.py`.
 
 ```python
-from src.capym import *
+from src.main import *
 
 # Condições iniciais:
 a = 0.3471128135672417
@@ -128,7 +129,7 @@ Resultado:
 ---
 
 ```python
-from src.capym import *
+from src.main import *
 
 # Condições iniciais:
 sol = coisas.Particula(s=(0, 0), m=1000)

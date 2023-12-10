@@ -1,6 +1,6 @@
 """Código do autor usado para gerar algumas animações para aulas"""
 
-from src.capym import *
+from src.main import *
 
 r = int(input('Número da apresentação: '))
 dire = 'C:/Users/Ícaro/Desktop/ani.gif'  # + str(r) + '.mp4'

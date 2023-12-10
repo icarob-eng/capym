@@ -25,7 +25,7 @@ http://dx.doi.org/10.1590/1806-9126-rbef-2017-0401. Acesso em: 28 maio 2021.
 """
 
 
-from src.capym import *
+from src.main import *
 
 sis = input('Selecione sistema de 3 corpos de exemplo: \n'
             '1 - Infinito \n'

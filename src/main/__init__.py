@@ -13,4 +13,6 @@ coisas
     Possui objetos simuláveis em `sim`.
 """
 
-__all__ = ['sim', 'particle.py']
+__version__ = '1.0.0'
+
+__all__ = ['sim', 'simulation']

@@ -1,24 +1,25 @@
-from uuid import UUID
 
 import numpy
+import uuid
 import json
 
-from numpy import ndarray, dtype
-import uuid
+from numpy import array
+from uuid import UUID
 
 
 class Object(object):
 
     def __init__(self, mass: float, position: tuple, velocity: tuple, acceleration: tuple = (0, 0)):
+        super().__init__()
         self.__uuid = uuid.uuid4()
         self.__mass = mass
-        self.__position = numpy.array(position)
-        self.__velocity = numpy.array(velocity)
-        self.__acceleration = numpy.array(acceleration)
+        self.__position = array(position, dtype=numpy.float32)
+        self.__velocity = array(velocity, dtype=numpy.float32)
+        self.__acceleration = array(acceleration, dtype=numpy.float32)
 
     def __dict__(self) -> dict:
         return {
-            'uuid': self.__uuid,
+            'uuid': self.__uuid.hex,
             'mass': self.__mass,
             'position': self.__position.tolist(),
             'velocity': self.__velocity.tolist(),
@@ -50,7 +51,7 @@ class Object(object):
             raise Exception('The mass of a body cannot be negative.')
 
     @property
-    def position(self) -> ndarray:
+    def position(self) -> array:
         return self.__position
 
     @position.setter
@@ -58,11 +59,11 @@ class Object(object):
         self.__position = numpy.array(position)
 
     @position.setter
-    def position(self, position: ndarray):
-        self.__position = numpy.array(position)
+    def position(self, position: numpy.array):
+        self.__position = position
 
     @property
-    def velocity(self) -> ndarray:
+    def velocity(self) -> numpy.array:
         return self.__velocity
 
     @velocity.setter
@@ -70,11 +71,11 @@ class Object(object):
         self.__velocity = numpy.array(velocity)
 
     @velocity.setter
-    def velocity(self, velocity: ndarray):
+    def velocity(self, velocity: array):
         self.__velocity = velocity
 
     @property
-    def acceleration(self) -> ndarray:
+    def acceleration(self) -> array:
         return self.__acceleration
 
     @acceleration.setter
@@ -82,10 +83,10 @@ class Object(object):
         self.__acceleration = numpy.array(acceleration)
 
     @acceleration.setter
-    def acceleration(self, acceleration: ndarray):
+    def acceleration(self, acceleration: array):
         self.__acceleration = acceleration
 
-    def gravitational_acceleration(self, to, constant_of_gravitation: float) -> ndarray:
+    def gravitational_acceleration(self, to, constant_of_gravitation: float) -> array:
         if isinstance(to, self.__class__) or issubclass(to, self.__class__):
             distance_vector = to.position - self.position
             return ((
