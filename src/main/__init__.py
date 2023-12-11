@@ -1,3 +1,6 @@
+from simulation import *
+
+
 """
 Capym: capy, python, mecânica
 =====================
