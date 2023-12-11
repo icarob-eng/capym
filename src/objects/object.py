@@ -9,13 +9,12 @@ from uuid import UUID
 
 class Object(object):
 
-    def __init__(self, mass: float, position: tuple, velocity: tuple, acceleration: tuple = (0, 0)):
+    def __init__(self, mass: float, position: tuple, velocity: tuple):
         super().__init__()
         self.__uuid = uuid.uuid4()
         self.__mass = mass
         self.__position = array(position, dtype=numpy.float32)
         self.__velocity = array(velocity, dtype=numpy.float32)
-        self.__acceleration = array(acceleration, dtype=numpy.float32)
 
     def __dict__(self) -> dict:
         return {
@@ -31,7 +30,10 @@ class Object(object):
 
     def __eq__(self, other) -> bool:
         if isinstance(other, self.__class__) or issubclass(other, self.__class__):
-            return self.__mass == other.mass and self.__position == other.position and self.__velocity == other.velocity and self.__acceleration == other
+            return self.__mass == other.mass \
+                and self.__position == other.position \
+                and self.__velocity == other.velocity \
+                and self.__acceleration == other
         else:
             return False
 
@@ -75,26 +77,20 @@ class Object(object):
     def velocity(self, velocity: array):
         self.__velocity = velocity
 
-    @property
-    def acceleration(self) -> array:
-        return self.__acceleration
-
-    @acceleration.setter
-    def acceleration(self, acceleration: tuple):
-        self.__acceleration = numpy.array(acceleration)
-
-    @acceleration.setter
-    def acceleration(self, acceleration: array):
-        self.__acceleration = acceleration
+    def acceleration_contribution(self, other, gravitational_constant: float, **kwargs) -> array:
+        return self.gravitational_acceleration(other, gravitational_constant)
 
     @logger.catch
-    def gravitational_acceleration(self, other, gravitational_constant: float) -> array:
+    def __gravitational_acceleration(self, other, gravitational_constant: float) -> array:
         if isinstance(other, self.__class__) or issubclass(other, self.__class__):
             distance_vector = other.position - self.position
 
-            return (gravitational_constant * other.mass / (numpy.linalg.norm(distance_vector) )
+            if (numpy.linalg.norm(distance_vector)) == 0:
+                raise Exception('Two objects can\'t be in the same position')
+
+            return (gravitational_constant * other.mass / numpy.linalg.norm(distance_vector)
                     *
                     distance_vector / numpy.linalg.norm(distance_vector))
             # Gm/|r| * r/|r|
         else:
-            raise Exception('The to argument must be a Object.')
+            raise Exception('The other argument must be a Object.')

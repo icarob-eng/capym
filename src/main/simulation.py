@@ -18,7 +18,8 @@ class Simulation(object):
                  objects: array,
                  final_instant: float,
                  initial_instant: float = 0.0,
-                 gravitational_constant: float = 6.6708e-11
+                 gravitational_constant: float = 6.6708e-11,
+                 electrical_constant: float = 1.5576e-9
                  ):
 
         if numpy.dtype(objects) == numpy.dtypes.ObjectDType:
@@ -27,6 +28,7 @@ class Simulation(object):
             raise ValueError("The objects must be descendent of Object class.")
 
         self.__gravitational_constant = gravitational_constant
+        self.electrical_constant = electrical_constant
 
         self.__initial_instant = initial_instant
         self.__final_instant = final_instant
@@ -140,21 +142,20 @@ class Simulation(object):
         )
 
     def iterate(self, previously_simulated: float) -> None:
-
         objects_snapshot = array(self.objects, copy=True)
 
         self.__snapshots[previously_simulated] = objects_snapshot
 
         for obj in self.objects:
-            obj_acceleration_previously_value = obj.acceleration
+            resultant_acceleration = numpy.array([0, 0])
+
             for interacts_with in objects_snapshot:
                 if obj.uuid != interacts_with.uuid:
-                    obj.acceleration += obj.gravitational_acceleration(interacts_with, self.gravitational_constant)
+                    resultant_acceleration += obj.acceleration_contribution(
+                        interacts_with, self.gravitational_constant, self.electrical_constant)
 
             obj.velocity += obj.acceleration * self.step
             obj.position += obj.velocity * self.step
-
-            obj.acceleration = obj_acceleration_previously_value
 
     def run(self) -> None:
         steps = self.__generate_moments_with_homogeneous_steps()
