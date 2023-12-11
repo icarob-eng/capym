@@ -88,17 +88,13 @@ class Object(object):
         self.__acceleration = acceleration
 
     @logger.catch
-    def gravitational_acceleration(self, to, constant_of_gravitation: float) -> array:
-        if isinstance(to, self.__class__) or issubclass(to, self.__class__):
-            distance_vector = to.position - self.position
-            return ((
-                            (constant_of_gravitation * to.mass) /
-                            numpy.linalg.norm(distance_vector)
-                    )
+    def gravitational_acceleration(self, other, gravitational_constant: float) -> array:
+        if isinstance(other, self.__class__) or issubclass(other, self.__class__):
+            distance_vector = other.position - self.position
+
+            return (gravitational_constant * other.mass / (numpy.linalg.norm(distance_vector) )
                     *
-                    (
-                            distance_vector /
-                            numpy.linalg.norm(distance_vector)
-                    ))
+                    distance_vector / numpy.linalg.norm(distance_vector))
+            # Gm/|r| * r/|r|
         else:
             raise Exception('The to argument must be a Object.')

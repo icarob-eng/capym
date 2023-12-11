@@ -14,11 +14,11 @@ class Simulation(object):
 
     @logger.catch
     def __init__(self,
-                 interval: float,
+                 step: float,
                  objects: array,
-                 final_moment: float,
-                 initial_moment: float = 0.0,
-                 constant_of_gravitation: float = 6.6708e-11
+                 final_instant: float,
+                 initial_instant: float = 0.0,
+                 gravitational_constant: float = 6.6708e-11
                  ):
 
         if numpy.dtype(objects) == numpy.dtypes.ObjectDType:
@@ -26,41 +26,41 @@ class Simulation(object):
         else:
             raise ValueError("The objects must be descendent of Object class.")
 
-        self.__constant_of_gravitation = constant_of_gravitation
+        self.__gravitational_constant = gravitational_constant
 
-        self.__initial_moment = initial_moment
-        self.__final_moment = final_moment
-        self.__interval = interval
+        self.__initial_instant = initial_instant
+        self.__final_instant = final_instant
+        self.__step = step
 
-        self.__historical_moments: dict[float, array] = {}
+        self.__snapshots: dict[float, array] = {}
 
     def __dict__(self) -> dict:
         return {
-            "interval": self.__interval,
+            "step": self.__step,
             "objects": self.__objects,
             "number_of_objects": len(self.__objects),
-            "initial_moment": self.__initial_moment,
-            "final_moment": self.__final_moment,
-            "constant_of_gravitation": self.constant_of_gravitation,
+            "initial_instant": self.__initial_instant,
+            "final_instant": self.__final_instant,
+            "gravitational_constant": self.gravitational_constant,
         }
 
     def __copy__(self) -> 'Simulation':
-        return Simulation(initial_moment=self.initial_moment, objects=self.objects, final_moment=self.final_moment,
-                          interval=self.interval, constant_of_gravitation=self.constant_of_gravitation)
+        return Simulation(initial_instant=self.initial_instant, objects=self.objects, final_instant=self.final_instant,
+                          step=self.step, gravitational_constant=self.gravitational_constant)
 
     def __deepcopy__(self, memo) -> 'Simulation':
         return Simulation(
-            initial_moment=copy.deepcopy(self.__initial_moment, memo),
-            interval=copy.deepcopy(self.__interval, memo),
-            final_moment=copy.deepcopy(self.__final_moment, memo),
-            constant_of_gravitation=copy.deepcopy(self.__constant_of_gravitation, memo),
+            initial_instant=copy.deepcopy(self.__initial_instant, memo),
+            step=copy.deepcopy(self.__step, memo),
+            final_instant=copy.deepcopy(self.__final_instant, memo),
+            gravitational_constant=copy.deepcopy(self.__gravitational_constant, memo),
             objects=copy.deepcopy(self.__objects, memo)
         )
 
     def __str__(self) -> str:
-        return (f"Simulation(initial_moment={self.initial_moment}, final_moment={self.__final_moment}, "
-                f"interval={self.interval}, objects={self.objects}, "
-                f"constant_of_gravitation={self.constant_of_gravitation}")
+        return (f"Simulation(initial_instant={self.initial_instant}, final_instant={self.__final_instant}, "
+                f"step={self.step}, objects={self.objects}, "
+                f"gravitational_constant={self.gravitational_constant}")
 
     def __contains__(self, item: Object | uuid) -> bool:
         if isinstance(item, Object) or issubclass(item, Object):
@@ -74,92 +74,92 @@ class Simulation(object):
         return self
 
     @property
-    def interval(self) -> float:
-        return self.__interval
+    def step(self) -> float:
+        return self.__step
 
     @property
     def objects(self) -> array:
         return self.__objects
 
     @property
-    def initial_moment(self) -> float:
-        return self.__initial_moment
+    def initial_instant(self) -> float:
+        return self.__initial_instant
 
     @property
-    def constant_of_gravitation(self) -> float:
-        return self.__constant_of_gravitation
+    def gravitational_constant(self) -> float:
+        return self.__gravitational_constant
 
     @property
-    def final_moment(self) -> float:
-        return self.__final_moment
+    def final_instant(self) -> float:
+        return self.__final_instant
 
     @property
     def number_of_objects(self) -> int:
         return len(self.__objects)
 
     @property
-    def history(self) -> dict[float, array]:
-        return self.__historical_moments
+    def snapshots(self) -> dict[float, array]:
+        return self.__snapshots
 
     @property
-    def number_of_history(self) -> int:
-        return len(arange(self.initial_moment, self.final_moment, self.interval))
+    def number_of_snapshots(self) -> int:
+        return len(arange(self.initial_instant, self.final_instant, self.step))
 
     @property
     def moments(self) -> array:
-        return self.__generate_moments_with_homogeneous_intervals()
+        return self.__generate_moments_with_homogeneous_steps()
 
     @property
     def was_simulated(self) -> bool:
-        return len(self.__historical_moments) == 0
+        return len(self.__snapshots) == 0
 
     @property
     def uuids(self) -> array:
         return array([element.uuid for element in self.__objects])
 
     @property
-    def historical_moments(self) -> array:
-        return array([moment for (moment, _) in self.__historical_moments])
+    def snapshots_instants(self) -> array:
+        return array([snapshot for (snapshot, _) in self.__snapshots])
 
     @logger.catch
     def get_data_of_object_at(self, object_uuid: uuid.UUID, moment: float) -> Object:
 
-        if self.initial_moment <= moment <= self.final_moment:
-            intervals = self.__generate_moments_with_homogeneous_intervals()
+        if self.initial_instant <= moment <= self.final_instant:
+            steps = self.__generate_moments_with_homogeneous_steps()
 
-            index_of_the_closest = numpy.abs(intervals - moment).argmin()
-            closest = intervals[index_of_the_closest]
+            index_of_the_closest = numpy.abs(steps - moment).argmin()
+            closest = steps[index_of_the_closest]
 
-            return list(filter(lambda element: element.uuid == object_uuid, self.history[closest]))[0]
+            return list(filter(lambda element: element.uuid == object_uuid, self.snapshots_instants[closest]))[0]
 
         raise ValueError("The moment informed is outside the simulation range.")
 
-    def __generate_moments_with_homogeneous_intervals(self) -> array:
+    def __generate_moments_with_homogeneous_steps(self) -> array:
         return array(
-            [moment for moment in arange(self.initial_moment, self.final_moment, self.interval)]
+            [moment for moment in arange(self.initial_instant, self.final_instant, self.step)]
         )
 
-    def simulate(self, previously_simulated: float) -> None:
+    def iterate(self, previously_simulated: float) -> None:
 
         objects_snapshot = array(self.objects, copy=True)
 
-        self.__historical_moments[previously_simulated] = objects_snapshot
+        self.__snapshots[previously_simulated] = objects_snapshot
 
         for obj in self.objects:
             obj_acceleration_previously_value = obj.acceleration
             for interacts_with in objects_snapshot:
                 if obj.uuid != interacts_with.uuid:
-                    obj.acceleration += obj.gravitational_acceleration(interacts_with, self.constant_of_gravitation)
+                    obj.acceleration += obj.gravitational_acceleration(interacts_with, self.gravitational_constant)
 
-            obj.velocity += obj.acceleration * self.interval
-            obj.position += obj.velocity * self.interval
+            obj.velocity += obj.acceleration * self.step
+            obj.position += obj.velocity * self.step
 
             obj.acceleration = obj_acceleration_previously_value
 
     def run(self) -> None:
-        intervals = self.__generate_moments_with_homogeneous_intervals()
-        for interval in intervals:
-            self.simulate(interval)
+        steps = self.__generate_moments_with_homogeneous_steps()
+        for step in steps:
+            self.iterate(step)
 
     def to_json(self) -> str:
         return json.dumps(self.__dict__())
@@ -176,13 +176,13 @@ class Simulation(object):
             else:
                 NotADirectoryError("The parent directory does not exists.")
         else:
-            raise RuntimeError("The history is empty.")
+            raise RuntimeError("The snapshot list is empty.")
 
     def get_history_by_object(self, object_uuid: uuid) -> array:
         return array([obj for (_, objs_snapshot) in self.__objects for obj in objs_snapshot if obj.uuid == object_uuid])
 
-    def erase_history(self, save_as: Path = None):
+    def clear_snapshot_list(self, save_as: Path = None):
         if save_as is not None:
             self.save_to_file(file_path=save_as)
 
-        self.__historical_moments = {}
+        self.__snapshots = {}

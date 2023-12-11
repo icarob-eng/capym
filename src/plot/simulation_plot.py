@@ -22,21 +22,21 @@ class SimulationPlot(Plot, Simulation):
                  style: BackgroundStyle,
                  limits: Limits,
                  follow: uuid,
-                 final_moment: float,
+                 final_instant: float,
                  objects: array(dtype=numpy.dtypes.ObjectDType),
-                 initial_moment: float = 0.0,
+                 initial_instant: float = 0.0,
                  interval: float = 0.1,
                  speed: float = 1.0,
-                 constant_of_gravitation: float = 6.6708e-11
+                 gravitational_constant: float = 6.6708e-11
                  ):
         super().__init__(style, limits, speed)
         Simulation.__init__(
             self=self,
             interval=interval,
-            initial_moment=initial_moment,
-            final_moment=final_moment,
+            initial_instant=initial_instant,
+            final_instant=final_instant,
             objects=objects,
-            constant_of_gravitation=constant_of_gravitation
+            gravitational_constant=gravitational_constant
         )
         self.__follow = follow
 
@@ -46,7 +46,7 @@ class SimulationPlot(Plot, Simulation):
 
     @property
     def simulation_duration(self):
-        return self.final_moment-self.initial_moment
+        return self.final_instant-self.initial_instant
 
     def __animate_frame(self) -> None:
         plt.cla()
