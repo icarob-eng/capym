@@ -5,12 +5,14 @@ import numpy
 
 from numpy import array, arange
 from pathlib import Path
+from loguru import logger
 
 from src.objects.object import Object
 
 
 class Simulation(object):
 
+    @logger.catch
     def __init__(self,
                  interval: float,
                  objects: array,
@@ -55,7 +57,7 @@ class Simulation(object):
             objects=copy.deepcopy(self.__objects, memo)
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return (f"Simulation(initial_moment={self.initial_moment}, final_moment={self.__final_moment}, "
                 f"interval={self.interval}, objects={self.objects}, "
                 f"constant_of_gravitation={self.constant_of_gravitation}")
@@ -119,6 +121,7 @@ class Simulation(object):
     def historical_moments(self) -> array:
         return array([moment for (moment, _) in self.__historical_moments])
 
+    @logger.catch
     def get_data_of_object_at(self, object_uuid: uuid.UUID, moment: float) -> Object:
 
         if self.initial_moment <= moment <= self.final_moment:
@@ -136,7 +139,7 @@ class Simulation(object):
             [moment for moment in arange(self.initial_moment, self.final_moment, self.interval)]
         )
 
-    def simulate(self, previously_simulated: float):
+    def simulate(self, previously_simulated: float) -> None:
 
         objects_snapshot = array(self.objects, copy=True)
 
@@ -153,15 +156,16 @@ class Simulation(object):
 
             obj.acceleration = obj_acceleration_previously_value
 
-    def run(self):
+    def run(self) -> None:
         intervals = self.__generate_moments_with_homogeneous_intervals()
         for interval in intervals:
             self.simulate(interval)
 
-    def to_json(self):
+    def to_json(self) -> str:
         return json.dumps(self.__dict__())
 
-    def save_to_file(self, file_path: Path):
+    @logger.catch
+    def save_to_file(self, file_path: Path) -> None:
         if self.was_simulated:
             if file_path.parent.exists() and file_path.parent.is_dir():
                 if not file_path.exists():
@@ -174,5 +178,11 @@ class Simulation(object):
         else:
             raise RuntimeError("The history is empty.")
 
-    def get_history_by_object(self, object_uuid: uuid):
+    def get_history_by_object(self, object_uuid: uuid) -> array:
         return array([obj for (_, objs_snapshot) in self.__objects for obj in objs_snapshot if obj.uuid == object_uuid])
+
+    def erase_history(self, save_as: Path = None):
+        if save_as is not None:
+            self.save_to_file(file_path=save_as)
+
+        self.__historical_moments = {}

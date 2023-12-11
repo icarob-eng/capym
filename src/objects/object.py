@@ -1,4 +1,4 @@
-
+from loguru import logger
 import numpy
 import uuid
 import json
@@ -43,6 +43,7 @@ class Object(object):
     def mass(self) -> float:
         return self.__mass
 
+    @logger.catch
     @mass.setter
     def mass(self, mass: float):
         if mass >= 0:
@@ -86,6 +87,7 @@ class Object(object):
     def acceleration(self, acceleration: array):
         self.__acceleration = acceleration
 
+    @logger.catch
     def gravitational_acceleration(self, to, constant_of_gravitation: float) -> array:
         if isinstance(to, self.__class__) or issubclass(to, self.__class__):
             distance_vector = to.position - self.position
