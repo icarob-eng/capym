@@ -78,7 +78,7 @@ class Object(object):
         self.__velocity = velocity
 
     def acceleration_contribution(self, other, gravitational_constant: float, **kwargs) -> array:
-        return self.gravitational_acceleration(other, gravitational_constant)
+        return self.__gravitational_acceleration(other, gravitational_constant)
 
     @logger.catch
     def __gravitational_acceleration(self, other, gravitational_constant: float) -> array:
