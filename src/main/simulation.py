@@ -3,7 +3,7 @@ import json
 import uuid
 
 import attr.setters
-import attrs.setters
+import cattrs
 import numpy
 
 from numpy import array, arange
@@ -14,12 +14,12 @@ from attrs import define, field
 from src.objects.object import Object
 
 
-@define(frozen=True)
+@define(frozen=True, slots=False)
 class Simulation(object):
     step: float
     objects: array
     final_instant: float
-    snapshots: dict[float, array] = field(default={}, init=False, on_setattr=attrs.setters.NO_OP)
+    snapshots: dict[float, array] = field(default={}, init=False)
     initial_instant: float = field(default=0.0)
     gravitational_constant: float = field(default=6.6708e-11)
     electrical_constant: float = field(default=1.5576e-9)
@@ -79,16 +79,22 @@ class Simulation(object):
                     resultant_acceleration += obj.acceleration_contribution(
                         interacts_with, self.gravitational_constant, self.electrical_constant)
 
-            obj.velocity += obj.acceleration * self.step
-            obj.position += obj.velocity * self.step
+            # obj.velocity += obj.acceleration * self.step
+            # obj.position += obj.velocity * self.step
 
-    def run(self) -> None:
+    def run(self) -> 'Simulation':
         steps = self.__generate_moments_with_homogeneous_steps()
         for step in steps:
             self.iterate(step)
 
-    def to_json(self) -> str:
-        return json.dumps(self.__dict__)
+        return self
+
+    def unstructure(self):
+        return cattrs.unstructure(self)
+
+    @staticmethod
+    def structure(value):
+        return cattrs.structure(value, Simulation)
 
     @logger.catch
     def save_to_file(self, file_path: Path) -> None:
@@ -96,13 +102,13 @@ class Simulation(object):
             if file_path.parent.exists() and file_path.parent.is_dir():
                 if not file_path.exists():
                     file = open(file_path, 'w')
-                    file.write(self.to_json())
+                    file.write(self.unstructure())
                 else:
                     raise FileExistsError("The file already exists.")
             else:
                 NotADirectoryError("The parent directory does not exists.")
         else:
-            raise RuntimeError("The snapshot list is empty.")
+            raise RuntimeError("The simulation was not executed.")
 
     def get_history_by_object(self, object_uuid: uuid) -> array:
         return array([obj for (_, objs_snapshot) in self.objects for obj in objs_snapshot if obj.uuid == object_uuid])
@@ -111,4 +117,4 @@ class Simulation(object):
         if save_as is not None:
             self.save_to_file(file_path=save_as)
 
-        snapshots = {}
+        self.snapshots.clear()
