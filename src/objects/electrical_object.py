@@ -1,17 +1,14 @@
+import attr.setters
 import numpy
 from numpy import array
 
 from object import Object
+from attrs import define, field
 
 
+@define
 class ElectricalObject(Object):
-    def __init__(self,
-                 mass: float,
-                 position: tuple,
-                 velocity: tuple,
-                 electric_charge: float = 0):
-        super().__init__(mass, position, velocity)
-        self.electric_charge = electric_charge
+    electric_charge = field(factory=float, on_setattr=attr.setters.frozen)
 
     def acceleration_contribution(self, other, gravitational_constant: float, **kwargs) -> array:
         return self.__gravitational_acceleration(other, gravitational_constant) \
