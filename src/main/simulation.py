@@ -1,8 +1,6 @@
-import copy
 import json
 import uuid
 
-import attr.setters
 import attrs.setters
 import numpy
 
@@ -33,8 +31,8 @@ class Simulation(object):
         return len(arange(self.initial_instant, self.final_instant, self.step))
 
     @property
-    def moments(self) -> array:
-        return self.__generate_moments_with_homogeneous_steps()
+    def instants(self) -> array:
+        return self.__generate_instants_with_homogeneous_steps()
 
     @property
     def was_simulated(self) -> bool:
@@ -49,21 +47,21 @@ class Simulation(object):
         return array([instants for (instants, _) in self.snapshots])
 
     @logger.catch
-    def get_data_of_object_at(self, object_uuid: uuid.UUID, moment: float) -> Object:
+    def get_data_of_object_at(self, object_uuid: uuid.UUID, instant: float) -> Object:
 
-        if self.initial_instant <= moment <= self.final_instant:
-            steps = self.__generate_moments_with_homogeneous_steps()
+        if self.initial_instant <= instant <= self.final_instant:
+            steps = self.__generate_instants_with_homogeneous_steps()
 
-            index_of_the_closest = numpy.abs(steps - moment).argmin()
+            index_of_the_closest = numpy.abs(steps - instant).argmin()
             closest = steps[index_of_the_closest]
 
             return list(filter(lambda element: element.uuid == object_uuid, self.snapshots_instants[closest]))[0]
 
-        raise ValueError("The moment informed is outside the simulation range.")
+        raise ValueError("The instant informed is outside the simulation range.")
 
-    def __generate_moments_with_homogeneous_steps(self) -> array:
+    def __generate_instants_with_homogeneous_steps(self) -> array:
         return array(
-            [moment for moment in arange(self.initial_instant, self.final_instant, self.step)]
+            [instant for instant in arange(self.initial_instant, self.final_instant, self.step)]
         )
 
     def iterate(self, previously_simulated: float) -> None:
@@ -83,7 +81,7 @@ class Simulation(object):
             obj.position += obj.velocity * self.step
 
     def run(self) -> None:
-        steps = self.__generate_moments_with_homogeneous_steps()
+        steps = self.__generate_instants_with_homogeneous_steps()
         for step in steps:
             self.iterate(step)
 
@@ -104,7 +102,7 @@ class Simulation(object):
         else:
             raise RuntimeError("The snapshot list is empty.")
 
-    def get_history_by_object(self, object_uuid: uuid) -> array:
+    def get_snapshot_list_by_object(self, object_uuid: uuid) -> array:
         return array([obj for (_, objs_snapshot) in self.objects for obj in objs_snapshot if obj.uuid == object_uuid])
 
     def clear_snapshot_list(self, save_as: Path = None):
