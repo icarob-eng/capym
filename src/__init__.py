@@ -1,20 +1,7 @@
 import sys
 
 from pathlib import Path
-
 from loguru import logger
-
-from objects import *
-
-from plot import *
-
-from main import *
-
-from helpers.limits import Limits
-from helpers.background_style_enum import BackgroundStyle
-
-from colors.color import Color
-from colors.colors import Colors
 
 
 def configure_logging(output: object | Path = sys.stderr):
