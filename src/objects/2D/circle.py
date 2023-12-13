@@ -1,11 +1,11 @@
 from abc import ABC
 
-from numpy import array
 from matplotlib.patches import Circle as matplotCircle
+from numpy import array
 
+from src.colors.color import Color
 from src.objects.object import Object
 from src.plot.displayable import Displayable
-from src.colors.color import Color
 
 
 class Circle(Object, Displayable, ABC, matplotCircle):

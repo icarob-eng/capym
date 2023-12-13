@@ -14,10 +14,10 @@ formatos_suportados = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv',
     Lista de formatos suportados para serem salvos. Outros podem funcionar mas não garanto.
 """
 
-from src.capym import coisas as csa
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
+from src.capym import coisas as csa
 
 formatos_suportados = ('3g2', '3pg', 'amv', 'asf', 'avi', 'dirac', 'drc', 'flv', 'gif', 'm4v', 'mp2', 'mp3', 'mp4',
                        'mjpeg', 'mpeg', 'mpegets', 'mov', 'mkv', 'mxf', 'mxf_d10', 'mxf_opatom', 'nsv', 'null', 'ogg',

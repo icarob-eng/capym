@@ -1,13 +1,12 @@
-import attr.setters
 import numpy as np
+from attrs import define
 
-from object import Object
-from attrs import define, field
+from .object import Object
 
 
-@define
+@define(frozen=True)
 class ElectricalObject(Object):
-    electric_charge = field(factory=float, on_setattr=attr.setters.frozen)
+    electric_charge:float
 
     def acceleration_contribution(self, other, gravitational_constant: float, **kwargs) -> np.array:
         return self.__gravitational_acceleration(other, gravitational_constant) \

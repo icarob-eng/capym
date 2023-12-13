@@ -1,16 +1,15 @@
 from abc import ABC, abstractmethod
 
-import attr.setters
+from attrs import define
 from loguru import logger
-from attrs import field, define
 
 from src.colors.color import Color
 
 
-@define
+@define(slots=False)
 class Displayable(ABC):
 
-    color: Color = field(on_setattr=attr.setters.frozen)
+    color: Color
 
     @logger.catch
     @abstractmethod

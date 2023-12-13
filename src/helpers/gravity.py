@@ -1,5 +1,4 @@
 import numpy
-
 from numpy import array
 
 from src.objects.object import Object

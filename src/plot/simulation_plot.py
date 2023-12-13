@@ -1,15 +1,15 @@
 import uuid
-
-from fontTools.varLib.errors import UnsupportedFormat
-from matplotlib import pyplot as plt
-from attrs import define, field
-from matplotlib.animation import FuncAnimation, writers
 from pathlib import Path
-from loguru import logger
 
-from src.plot.plot import Plot
+from attrs import define, field
+from fontTools.varLib.errors import UnsupportedFormat
+from loguru import logger
+from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation, writers
+
 from src.main.simulation import Simulation
 from src.objects.object import Object
+from src.plot.plot import Plot
 
 
 @define(slots=False)

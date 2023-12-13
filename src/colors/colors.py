@@ -1,6 +1,6 @@
 from enum import Enum
 
-from color import Color
+from src.colors.color import Color
 
 
 class Colors(Enum):
@@ -8,5 +8,5 @@ class Colors(Enum):
     green: Color = Color(0, 255, 0)
     blue: Color = Color(0, 0, 255)
 
-    def __dict__(self):
-        return {"value": self.value}
+    black: Color = Color(0, 0, 0)
+    white: Color = Color(255, 255, 255)

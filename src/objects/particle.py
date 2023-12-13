@@ -1,4 +1,4 @@
-from attrs import setters, define, field
+from attrs import define
 
 from src.objects.object import Object
 from src.plot.displayable import Displayable

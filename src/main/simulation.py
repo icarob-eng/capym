@@ -1,16 +1,13 @@
-import copy
 import json
 import uuid
-
-import attr.setters
-import cattrs
-import attrs.setters
-import numpy
-
-from numpy import array, arange
 from pathlib import Path
-from loguru import logger
+
+import attrs
+import cattrs
+import numpy
 from attrs import define, field
+from loguru import logger
+from numpy import array, arange
 
 from src.objects.object import Object
 
@@ -48,6 +45,16 @@ class Simulation(object):
     @property
     def snapshots_instants(self) -> array:
         return array([instants for (instants, _) in self.snapshots])
+
+    def unstruct(self):
+        cattrs.unstructure(self)
+
+    @staticmethod
+    def struct(value):
+        cattrs.structure(value, Simulation)
+
+    def to_json(self) -> str:
+        return json.dumps(attrs.asdict(self))
 
     @logger.catch
     def get_data_of_object_at(self, object_uuid: uuid.UUID, instant: float) -> Object:

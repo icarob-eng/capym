@@ -1,12 +1,8 @@
-from abc import ABC
-
-from numpy import array
+from attrs import define
 from matplotlib.patches import Circle as matplotCircle
 
 from src.objects.object import Object
 from src.plot.displayable import Displayable
-from src.colors.color import Color
-from attrs import define
 
 
 @define

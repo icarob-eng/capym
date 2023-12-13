@@ -5,3 +5,4 @@ loguru~=0.7.2
 attrs~=23.1.0
 cattrs~=23.2.3
 fonttools~=4.46.0
+click~=8.1.7

@@ -1,15 +1,28 @@
 import numpy as np
-
-from electrical_object import ElectricalObject
 from attrs import define, field
 
 from src.objects.object import Object
+from .electrical_object import ElectricalObject
 
 
 @define
 class Line(ElectricalObject):
-    direction = field(factory=lambda i: np.array(i)/np.linalg.norm(np.array(i)))  # guarantees direction is unit vector
-    normal_direction = np.array((- direction[1], direction[0]))
+    direction: np.array = field()
+    normal_direction: np.ndarray = field(init=False)
+
+    @normal_direction.default
+    def _normal_direction(self):
+        return np.array((- self.direction[1], self.direction[0]))
+
+    @direction.validator
+    def validate_direction(self, attribute, value):
+        if not isinstance(value, np.ndarray):
+            raise ValueError("The vector must be a numpy array.")
+
+        norm = np.linalg.norm(value)
+        if not np.isclose(norm, 1.0):
+            normalized_vector = value / norm
+            setattr(self, attribute.name, normalized_vector)
 
     def __gravitational_acceleration(self, other: Object, gravitational_constant: float) -> np.array:
         distance_vector = self.normal_direction.dot(other.position) * self.normal_direction

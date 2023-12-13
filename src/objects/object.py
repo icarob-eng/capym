@@ -1,16 +1,24 @@
-import numpy as np
 import uuid
 
-from loguru import logger
+import cattrs
+import numpy as np
 from attrs import define, field
+from loguru import logger
 
 
-@define(auto_attribs=True)
+@define(auto_attribs=True, slots=False)
 class Object(object):
     uuid: uuid = field(default=uuid.uuid4(), init=False)
     mass: float
     position: np.array
     velocity: np.array
+
+    def unstruct(self):
+        return cattrs.unstructure(self)
+
+    @staticmethod
+    def struct(value):
+        return cattrs.structure(value, Object)
 
     def acceleration_contribution(self, other, gravitational_constant: float, **kwargs) -> np.array:
         return self.__gravitational_acceleration(other, gravitational_constant)
