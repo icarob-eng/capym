@@ -35,7 +35,7 @@ class Simulation(object):
 
     @property
     def moments(self) -> array:
-        return self.__generate_moments_with_homogeneous_steps()
+        return self.__generate_instants_with_homogeneous_steps()
 
     @property
     def was_simulated(self) -> bool:
@@ -84,7 +84,7 @@ class Simulation(object):
             # obj.position += obj.velocity * self.step
 
     def run(self) -> 'Simulation':
-        steps = self.__generate_moments_with_homogeneous_steps()
+        steps = self.__generate_instants_with_homogeneous_steps()
         for step in steps:
             self.iterate(step)
 
