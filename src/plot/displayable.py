@@ -1,17 +1,9 @@
-from abc import ABC, abstractmethod
-
 from attrs import define
-from loguru import logger
 
 from src.colors.color import Color
+from src.objects.object import Object
 
 
 @define(slots=False)
-class Displayable(ABC):
-
+class Displayable(Object):
     color: Color
-
-    @logger.catch
-    @abstractmethod
-    def draw(self):
-        raise NotImplementedError("The draw method is not implemented.")

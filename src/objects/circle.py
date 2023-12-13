@@ -6,7 +6,5 @@ from src.plot.displayable import Displayable
 
 
 @define
-class Circle(Object, Displayable, matplotCircle):
-
-    def draw(self):
-        pass
+class Circle(Displayable, matplotCircle):
+    pass

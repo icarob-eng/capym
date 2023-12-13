@@ -20,3 +20,7 @@ class Color(object):
         blue = random.randint(begin, end)
 
         return Color(red, green, blue)
+
+    @property
+    def to_mathplot_color(self):
+        return self.red / 255, self.green / 255, self.blue / 255

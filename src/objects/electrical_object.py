@@ -6,7 +6,7 @@ from .object import Object
 
 @define(frozen=True)
 class ElectricalObject(Object):
-    electric_charge:float
+    electric_charge: float
 
     def acceleration_contribution(self, other, gravitational_constant: float, **kwargs) -> np.array:
         return self.__gravitational_acceleration(other, gravitational_constant) \

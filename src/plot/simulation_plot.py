@@ -6,14 +6,17 @@ from fontTools.varLib.errors import UnsupportedFormat
 from loguru import logger
 from matplotlib import pyplot as plt
 from matplotlib.animation import FuncAnimation, writers
+from numpy import array, ndarray
 
 from src.main.simulation import Simulation
-from src.objects.object import Object
+# from src.objects.object import Object
+from src.objects.particle import Particle
 from src.plot.plot import Plot
 
 
-@define(slots=False)
+@define
 class SimulationPlot(Simulation, Plot):
+    objects: ndarray[Particle] = field(factory=ndarray, init=True)
     follow: uuid = field(default=uuid.uuid4(), init=False)
     title: str = field(default="", init=True)
 
@@ -29,16 +32,19 @@ class SimulationPlot(Simulation, Plot):
             plt.xlim(self.limits.x)
             plt.ylim(self.limits.y)
         else:
+            obj = next((element for element in self.objects if element.uuid == self.follow), None)
 
-            obj: Object = filter(lambda element: element.uuid == self.follow, self.objects)
+            if obj is not None:
+                plt.xlim(self.limits.x + obj.position[0])
+                plt.ylim(self.limits.y + obj.position[1])
 
-            plt.xlim(self.limits.x + obj.position)
-            plt.ylim(self.limits.y + obj.position)
+        # x_coordinates = [element.position[0] for element in self.snapshots[moment]]
+        # y_coordinates = [element.position[1] for element in self.snapshots[moment]]
+        # colors = [element.color for element in self.objects]
 
-        x_coordinates = [element.position[0] for element in self.snapshots[moment]]
-        y_coordinates = [element.position[1] for element in self.snapshots[moment]]
-        plt.scatter(x_coordinates, y_coordinates)
-        plt.title(self.title)
+        for obj in self.snapshots[moment]:
+            plt.scatter(obj.position[0], obj.position[1], label=obj.name, color=obj.color.to_mathplot_color, marker='o')
+            plt.title(self.title)
 
     @logger.catch
     def animate(self, save_as: Path = None) -> None:
@@ -47,14 +53,15 @@ class SimulationPlot(Simulation, Plot):
         if save_as is not None:
             if save_as.suffix.split('.')[1] in self.supported_formats:
 
-                fps = self.number_of_snapshots
-                if fps > 30:
-                    fps = 30
+                fps = min(self.number_of_snapshots, 30)
 
                 ffmpeg = writers['ffmpeg']
                 writer = ffmpeg(fps=fps)
-                animation.save(save_as, writer)
-                logger.info(f"Saved on {save_as}")
+                try:
+                    animation.save(save_as, writer)
+                    logger.info(f"Saved on {save_as}")
+                except Exception as e:
+                    logger.error(f"Error saving animation: {e}")
 
             else:
                 raise UnsupportedFormat(f"Unsupported format.")
